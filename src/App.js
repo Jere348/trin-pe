@@ -1,4 +1,6 @@
 import React,{ useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import Login from './Login';
 import './App.css';
 import logoImg from './assets/logo.png';
 import heroImg from './assets/hero.jpg';
@@ -6,17 +8,14 @@ import perfil1 from './assets/perfil1.png'; // Cambia .jpg por .png si es necesa
 import perfil2 from './assets/perfil2.png';
 import perfil3 from './assets/perfil3.png';
 
-function App() {
-  // --- INICIO DEL NUEVO CÓDIGO ---
-  // Creamos estados para guardar lo que el usuario escribe
+function Inicio() {
+  const navigate = useNavigate();
   const [nombre, setNombre] = useState('');
   const [correo, setCorreo] = useState('');
   const [mensaje, setMensaje] = useState('');
 
-  // Verificamos si los 3 campos tienen texto (ninguno está vacío)
   const formularioLleno = nombre.trim() !== '' && correo.trim() !== '' && mensaje.trim() !== '';
-  // --- FIN DEL NUEVO CÓDIGO ---
-
+  
   return (
     <div className="App">
       {/* NAVEGACIÓN */}
@@ -29,7 +28,7 @@ function App() {
           <li><a href="#testimonios">Testimonios</a></li>
           <li><a href="#contacto">Contacto</a></li>
         </ul>
-        <button className="btn-login">Iniciar sesión</button>
+        <button className="btn-login" onClick={() => navigate('/login')}>Iniciar sesión</button>
       </nav>
 
       {/* HERO SECTION */}
@@ -38,8 +37,8 @@ function App() {
           <h1>Simplifica tus trámites en Perú</h1>
           <p>Toda la información que necesitas, paso a paso y en un solo lugar.</p>
           <div className="hero-buttons">
-            <button className="btn-primary">Buscar trámite</button>
-            <button className="btn-secondary">Ver catálogo</button>
+            <button className="btn-primary" onClick={() => navigate('/login')}>Buscar trámite</button>
+            <button className="btn-secondary" onClick={() => navigate('/login')}>Ver catálogo</button>
           </div>
         </div>
         <div className="hero-image-container">
@@ -198,6 +197,17 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Inicio />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </Router>
   );
 }
 
