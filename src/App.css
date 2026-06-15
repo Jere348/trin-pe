@@ -43,13 +43,6 @@ h1, h2, h3, h4 {
   border-bottom: 1px solid #e5e7eb;
 }
 
-.logo-placeholder {
-  background-color: #D1D5DB;
-  padding: 8px 24px;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
 .nav-links {
   display: flex;
   list-style: none;
@@ -64,12 +57,20 @@ h1, h2, h3, h4 {
 }
 
 .btn-login {
-  background-color: #E5E7EB;
-  border: 1px solid #D1D5DB;
-  padding: 8px 16px;
+  background-color: var(--primary); /* Usa el azul principal de tu paleta (#1E3A8A) */
+  color: var(--white);              /* Texto en blanco para contraste */
+  border: none;                     /* Quitamos el borde gris viejo */
+  padding: 8px 18px;
   border-radius: 4px;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
+  font-weight: 600;                 /* Letra un poco más gruesa */
+  transition: background-color 0.3s ease; /* Transición suave para el mouse */
+}
+
+/* Efecto al pasar el mouse por encima */
+.btn-login:hover {
+  background-color: var(--accent);  /* Cambia al azul más claro (#2563EB) */
 }
 
 /* --- HERO SECTION --- */
@@ -122,16 +123,31 @@ h1, h2, h3, h4 {
   cursor: pointer;
 }
 
-.hero-image-placeholder {
+/* --- ESTILOS DE IMÁGENES NUEVAS --- */
+.logo-img {
+  height: 150px; /* Ajusta la altura de tu logo según necesites */
+  width: auto;
+}
+
+.logo-img-small {
+  height: 80px;
+  width: auto;
+  margin-bottom: 16px;
+}
+
+.hero-image-container {
   flex: 1;
-  height: 300px;
-  background-color: #9CA3AF;
   display: flex;
-  align-items: center;
   justify-content: center;
-  color: var(--text-main);
-  font-size: 24px;
-  border-radius: 8px;
+  align-items: center;
+}
+
+.hero-img-real {
+  width: 100%;
+  max-width: 500px; /* Evita que la imagen sea gigante en PC np*/
+  border-radius: 8px; /* Le da bordes redondeados como en tu diseño */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Sombra suave elegante */
+  object-fit: cover;
 }
 
 /* --- SECCIONES GLOBALES --- */
@@ -236,12 +252,14 @@ h1, h2, h3, h4 {
   flex: 1;
 }
 
-.avatar-placeholder {
-  width: 50px;
-  height: 50px;
-  background-color: #D1D5DB;
-  border-radius: 50%;
+/* --- ESTILO PARA LAS FOTOS DE PERFIL --- */
+.avatar-img {
+  width: 60px;          /* Ancho de la foto */
+  height: 60px;         /* Alto de la foto (debe ser igual al ancho) */
+  border-radius: 50%;   /* Esto es lo que hace el círculo perfecto */
+  object-fit: cover;    /* Evita que la cara se estire si la foto no es cuadrada */
   margin-bottom: 16px;
+  border: 2px solid #e5e7eb; /* Opcional: un bordecito gris elegante */
 }
 
 .testimonial-card p {
@@ -288,14 +306,26 @@ h1, h2, h3, h4 {
   font-family: 'Inter', sans-serif;
 }
 
+/* Botón apagado (por defecto) */
 .btn-send {
-  background-color: #9CA3AF;
+  background-color: #9CA3AF; /* Gris apagado */
   color: var(--white);
   border: none;
   padding: 12px;
   border-radius: 4px;
-  cursor: pointer;
+  cursor: not-allowed; /* El mouse muestra que no se puede hacer clic */
   font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+/* Botón prendido (cuando tiene la clase btn-active) */
+.btn-send.btn-active {
+  background-color: var(--primary); /* Azul principal */
+  cursor: pointer; /* El mouse vuelve a la manito normal */
+}
+
+.btn-send.btn-active:hover {
+  background-color: var(--accent); /* Azul más claro al pasar el mouse */
 }
 
 /* --- FOOTER --- */
@@ -357,37 +387,86 @@ h1, h2, h3, h4 {
   font-size: 12px;
 }
 
-/* --- RESPONSIVE MOBILE --- */
+/* ==========================================
+   RESPONSIVE MOBILE (Versión Celular)
+   ========================================== */
 @media screen and (max-width: 768px) {
+  /* 1. Navegación: Ocultamos el menú largo para no saturar la pantalla */
   .navbar {
-    flex-direction: column;
-    gap: 16px;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 16px 5%;
   }
   
   .nav-links {
-    flex-wrap: wrap;
-    justify-content: center;
+    display: none; /* En un proyecto real aquí iría un menú hamburguesa */
   }
-  
+
+  /* 2. Hero Section: Apilamos imagen y texto */
   .hero-section {
-    flex-direction: column;
+    flex-direction: column-reverse; /* Pone la imagen arriba y el texto abajo */
     text-align: center;
+    padding: 40px 5%;
   }
   
   .hero-text {
     padding-right: 0;
-    margin-bottom: 32px;
+  }
+  
+  .hero-text h1 {
+    font-size: 28px; /* Letra un poco más pequeña para móvil */
   }
   
   .hero-buttons {
-    justify-content: center;
+    flex-direction: column; /* Botones uno debajo del otro */
+    gap: 12px;
   }
   
-  .steps-grid, .benefits-grid, .testimonials-grid, .contact-section, .footer {
+  .hero-image-container {
+    margin-bottom: 24px;
+  }
+
+  /* 3. Cómo Funciona: Pasos en lista vertical */
+  .steps-grid {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .step-card {
+    flex-direction: row; /* Número a la izquierda, texto a la derecha */
+    text-align: left;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .step-number {
+    margin-bottom: 0;
+    flex-shrink: 0; /* Evita que el círculo se aplaste */
+  }
+
+  /* 4. Beneficios: Cuadrícula 2x2 como en tu diseño original */
+  .benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .benefit-card {
+    padding: 16px 10px;
+  }
+
+  .benefit-card h3 {
+    font-size: 14px;
+  }
+
+  /* 5. Testimonios, Contacto y Footer: Apilados verticalmente */
+  .testimonials-grid, .contact-section {
     flex-direction: column;
   }
-  
+
   .footer {
+    flex-direction: column;
+    text-align: center;
     gap: 32px;
   }
 }
