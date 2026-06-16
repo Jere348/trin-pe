@@ -1,0 +1,362 @@
+/* DISEÑO GENERAL */
+.panel-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f4f6f9; /* Fondo gris muy claro para resaltar las tarjetas blancas */
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* SIDEBAR (MENÚ LATERAL) */
+.sidebar {
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid #e0e4e8;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+}
+
+.sidebar-logo {
+  padding: 0 20px 30px 20px;
+  border-bottom: 1px solid #e0e4e8;
+  text-align: center;
+  color: #1a365d;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  flex-grow: 1;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 15px 25px;
+  font-size: 15px;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: #f8fafc;
+  color: #2563eb;
+}
+
+.nav-item.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-right: 4px solid #2563eb;
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  padding: 20px;
+}
+
+.btn-logout {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ÁREA PRINCIPAL */
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* CABECERA */
+.top-header {
+  height: 70px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e4e8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+}
+
+.header-title {
+  font-size: 20px;
+  color: #1a365d;
+  font-weight: 700;
+}
+
+.user-avatar {
+  background-color: #1a365d;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* CONTENEDOR CENTRAL */
+.content-wrapper {
+  padding: 40px;
+  max-width: 1000px;
+}
+
+/* RUTAS (BREADCRUMBS) */
+.breadcrumbs {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crumb {
+  cursor: pointer;
+}
+
+.crumb:hover {
+  text-decoration: underline;
+  color: #2563eb;
+}
+
+.current {
+  color: #2563eb;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.section-title {
+  color: #1e293b;
+  margin-bottom: 20px;
+}
+
+/* BUSCADOR */
+.search-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 40px;
+}
+
+.search-input {
+  flex-grow: 1;
+  padding: 15px 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.btn-search {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 0 30px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-search:hover {
+  background-color: #1d4ed8;
+}
+
+/* TARJETAS DE RESULTADOS (CARDS) */
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Espacio entre los cuadritos */
+}
+
+.result-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+  border-color: #cbd5e1;
+}
+
+.card-title {
+  font-size: 18px;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.card-entity {
+  display: inline-block;
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+/* ==========================================
+   VISTA DE DETALLE DEL TRÁMITE
+   ========================================== */
+.btn-volver-buscador {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.btn-volver-buscador:hover {
+  text-decoration: underline;
+}
+
+.detalle-header {
+  margin-bottom: 30px;
+}
+
+.detalle-entidad {
+  display: inline-block;
+  background-color: #e2e8f0;
+  color: #475569;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.detalle-titulo {
+  color: #1e293b;
+  font-size: 28px;
+  margin: 0 0 10px 0;
+}
+
+.detalle-descripcion {
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.detalle-info-grid {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.info-box {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  padding: 15px 20px;
+  border-radius: 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.info-valor {
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.detalle-seccion {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 30px;
+  margin-bottom: 20px;
+}
+
+.detalle-seccion h3 {
+  color: #1e3a8a;
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 10px;
+}
+
+.requisitos-lista {
+  padding-left: 20px;
+  color: #334155;
+  line-height: 1.8;
+}
+
+.paso-card {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.paso-numero {
+  background-color: #2563eb;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.paso-contenido h4 {
+  margin: 0 0 8px 0;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.paso-contenido p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+}
+/* BOTÓN DE DESCARGA PDF */
+.btn-descargar-pdf {
+  display: inline-block;
+  margin-top: 12px;
+  background-color: #f1f5f9;
+  color: #2563eb;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.btn-descargar-pdf:hover {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+}

@@ -41,7 +41,7 @@ const url = esRegistro
         // Si el servidor responde con éxito (Status 200)
         alert(resultado.mensaje);
         if (!esRegistro) {
-          navigate('/'); // Si fue login exitoso, lo mandamos al inicio
+          navigate('/panel'); // <--- ¡AQUÍ ESTÁ EL CAMBIO CLAVE!
         } else {
           setEsRegistro(false); // Si fue registro exitoso, lo pasamos a la pantalla de login
         }
@@ -91,10 +91,10 @@ const url = esRegistro
           {!esRegistro ? (
             <div className="login-buttons-row">
               <button type="submit" className="btn-ciudadano">Ciudadano</button>
-              <button type="button" className="btn-admin">Admin</button>
+              <button type="button" className="btn-admin" onClick={() => navigate('/admin')}>Admin</button>
             </div>
           ) : (
-             <button type="submit" className="btn-ciudadano" style={{ width: '100%' }}>Registrarme</button>
+            <button type="submit" className="btn-ciudadano" style={{ width: '100%' }}>Registrarme</button>
           )}
         </form>
 

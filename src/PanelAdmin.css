@@ -1,0 +1,393 @@
+/* DISEÑO GENERAL ADMIN */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* SIDEBAR ADMIN */
+.admin-sidebar {
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+}
+
+/* El nav-item usa estilos similares al ciudadano, pero adaptados */
+.admin-sidebar .nav-item {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 15px 25px;
+  font-size: 15px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-sidebar .nav-item:hover {
+  background-color: #f1f5f9;
+}
+
+/* Estado activo del menú Admin (Azul sutil a la izquierda) */
+.admin-sidebar .nav-item.active {
+  background-color: #eff6ff;
+  color: #1e3a8a;
+  border-left: 4px solid #1e3a8a;
+  font-weight: 600;
+}
+
+/* ÁREA PRINCIPAL ADMIN */
+.admin-main {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-header {
+  height: 70px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+}
+
+/* Avatar Rojo para el Admin */
+.admin-avatar {
+  background-color: #ef4444; 
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.admin-content {
+  padding: 40px;
+  max-width: 1000px;
+}
+
+/* FORMULARIO DE CATÁLOGO */
+.admin-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.admin-card h3 {
+  color: #1e3a8a;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-row {
+  display: flex;
+  gap: 20px;
+}
+
+.admin-form .input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-form label {
+  font-size: 14px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.admin-form input,
+.admin-form select {
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.admin-form input:focus,
+.admin-form select:focus {
+  border-color: #2563eb;
+}
+
+.file-input {
+  border: 1px dashed #cbd5e1 !important;
+  background-color: #f8fafc;
+  cursor: pointer;
+}
+
+.btn-primary-admin {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 10px;
+}
+
+.btn-primary-admin:hover {
+  background-color: #1d4ed8;
+}
+
+.placeholder-text {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* NUEVOS ESTILOS PARA EL FORMULARIO AVANZADO */
+.form-subtitle {
+  color: #0f172a;
+  font-size: 16px;
+  margin: 20px 0 15px 0;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 5px;
+  display: inline-block;
+}
+
+.admin-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.admin-textarea:focus {
+  border-color: #2563eb;
+}
+
+.form-divider {
+  border: 0;
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 25px 0;
+}
+
+/* Constructor de Pasos */
+.step-builder-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.step-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.step-badge {
+  background-color: #1e3a8a;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.btn-remove-step {
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.btn-remove-step:hover {
+  opacity: 1;
+}
+
+.btn-add-step {
+  background-color: transparent;
+  color: #2563eb;
+  border: 2px dashed #cbd5e1;
+  padding: 12px;
+  width: 100%;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-step:hover {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+}
+
+.btn-large {
+  width: 100%;
+  font-size: 16px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+/* ==========================================
+   ESTILOS PARA LA LISTA DE TRÁMITES (CRUD)
+   ========================================== */
+.tramites-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.admin-tramite-card {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: box-shadow 0.2s;
+}
+
+.admin-tramite-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-edit {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-edit:hover {
+  background-color: #e2e8f0;
+}
+
+.btn-delete {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.btn-delete:hover {
+  background-color: #fca5a5;
+  color: white;
+}
+/* ==========================================
+   BARRA DE BÚSQUEDA DEL ADMINISTRADOR
+   ========================================== */
+.admin-search-container {
+  margin-bottom: 20px;
+}
+
+.admin-search-input {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  background-color: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+/* ==========================================
+   ESTILOS DEL DASHBOARD (TARJETAS Y EXPORTAR)
+   ========================================== */
+.admin-dropdown-filter {
+  padding: 8px 12px;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  color: #1e3a8a;
+  background-color: #f8fafc;
+  outline: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.metrics-cards-container {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  flex: 1;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 30px 20px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.metric-value {
+  color: #1e3a8a; /* Azul oscuro corporativo */
+  font-size: 40px;
+  font-weight: 800;
+  margin-bottom: 5px;
+}
+
+.metric-label {
+  color: #334155;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.btn-export-green {
+  background-color: #10b981; /* Verde esmeralda */
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-export-green:hover {
+  background-color: #059669; /* Verde más oscuro al pasar el ratón */
+}

@@ -7,6 +7,8 @@ import heroImg from './assets/hero.jpg';
 import perfil1 from './assets/perfil1.png'; // Cambia .jpg por .png si es necesario
 import perfil2 from './assets/perfil2.png';
 import perfil3 from './assets/perfil3.png';
+import PanelCiudadano from './PanelCiudadano'; // Tu nuevo panel
+import PanelAdmin from './PanelAdmin';
 
 function Inicio() {
   const navigate = useNavigate();
@@ -206,6 +208,10 @@ function App() {
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/panel" element={<PanelCiudadano />} />
+        
+        {/* LA NUEVA RUTA DEL ADMIN */}
+        <Route path="/admin" element={<PanelAdmin />} />
       </Routes>
     </Router>
   );
