@@ -2,149 +2,212 @@ import React, { useState, useEffect } from 'react';
 import './PanelCiudadano.css';
 
 const PanelCiudadano = () => {
+  const [vistaActual, setVistaActual] = useState('buscador'); // 'buscador', 'entidades', 'favoritos'
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
-  const [tramites, setTramites] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  
-  // NUEVA MEMORIA: Para saber qué trámite está viendo el usuario
+  const [listaTramites, setListaTramites] = useState([]);
   const [tramiteSeleccionado, setTramiteSeleccionado] = useState(null);
+  
+  // NUEVO: Estado para guardar las entidades
+  const [listaEntidades, setListaEntidades] = useState([]);
 
+  // Cargar datos al iniciar
+  useEffect(() => {
+    // 1. Cargar trámites
+    fetch('https://trin-pe-backend.onrender.com/api/tramites')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setListaTramites(data))
+      .catch(err => console.error("Error trámites:", err));
+
+    // 2. Cargar entidades
+    fetch('https://trin-pe-backend.onrender.com/api/entidades')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setListaEntidades(data))
+      .catch(err => console.error("Error entidades:", err));
+  }, []);
+
+  // Función espía para métricas
   const registrarBusquedaSilenciosa = async () => {
-    if (terminoBusqueda.trim().length < 2) return; // No registramos letras sueltas
-
+    if (terminoBusqueda.trim().length < 2) return;
     try {
       await fetch('https://trin-pe-backend.onrender.com/api/metricas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ termino: terminoBusqueda })
       });
-      // No ponemos 'alert' porque esto debe ser invisible para el ciudadano
-    } catch (error) {
-      console.error("Error al registrar métrica");
-    }
+    } catch (error) { console.error("Error métrica"); }
   };
 
-  useEffect(() => {
-    const obtenerTramites = async () => {
-      try {
-        const respuesta = await fetch('https://trin-pe-backend.onrender.com/api/tramites');
-        if (respuesta.ok) {
-          const data = await respuesta.json();
-          setTramites(data);
-        }
-      } catch (error) {
-        console.error("Error de conexión:", error);
-      } finally {
-        setCargando(false);
-      }
-    };
-    obtenerTramites();
-  }, []);
+  const tramitesFiltrados = listaTramites.filter(t => 
+    t.titulo.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
+    t.entidad.toLowerCase().includes(terminoBusqueda.toLowerCase())
+  );
 
-  const tramitesFiltrados = tramites.filter((tramite) => {
-    const busquedaMinuscula = terminoBusqueda.toLowerCase();
-    const tituloMinuscula = tramite.titulo.toLowerCase();
-    const entidadMinuscula = tramite.entidad.toLowerCase();
-    return tituloMinuscula.includes(busquedaMinuscula) || entidadMinuscula.includes(busquedaMinuscula);
-  });
-
-  // Función de seguridad por si Supabase nos devuelve los datos como texto en lugar de lista
   const obtenerListaSegura = (datos) => {
     if (!datos) return [];
     return typeof datos === 'string' ? JSON.parse(datos) : datos;
   };
 
   return (
-    <div className="panel-layout">
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="sidebar-logo">
-          <h2>Trámite Inteligente</h2>
-        </div>
+    <div className="ciudadano-layout">
+      {/* MENÚ LATERAL */}
+      <aside className="ciudadano-sidebar">
+        <div className="sidebar-logo"><h2>Trámite Fácil</h2></div>
         <nav className="sidebar-nav">
           <button 
-            className={`nav-item ${!tramiteSeleccionado ? 'active' : ''}`} 
-            onClick={() => setTramiteSeleccionado(null)}
+            className={`nav-item ${vistaActual === 'buscador' ? 'active' : ''}`} 
+            onClick={() => { setVistaActual('buscador'); setTramiteSeleccionado(null); }}
           >
-            🔍 Buscador de Trámites
+            🔍 Buscador Principal
           </button>
-          <button className="nav-item">📁 Catálogo de Entidades</button>
-          <button className="nav-item">⭐ Mis Guías Guardadas</button>
+          
+          {/* NUEVO BOTÓN: DIRECTORIO DE ENTIDADES */}
+          <button 
+            className={`nav-item ${vistaActual === 'entidades' ? 'active' : ''}`} 
+            onClick={() => { setVistaActual('entidades'); setTramiteSeleccionado(null); }}
+          >
+            🏢 Directorio de Entidades
+          </button>
+          
+          <button 
+            className={`nav-item ${vistaActual === 'favoritos' ? 'active' : ''}`} 
+            onClick={() => setVistaActual('favoritos')}
+          >
+            ⭐ Mis Guías Guardadas
+          </button>
         </nav>
-        <div className="sidebar-footer">
-          <button className="btn-logout">🚪 Cerrar sesión</button>
-        </div>
       </aside>
 
       {/* ÁREA PRINCIPAL */}
-      <main className="main-content">
-        <header className="top-header">
-          <h1 className="header-title">Panel Ciudadano</h1>
-          <div className="user-avatar">C</div>
+      <main className="ciudadano-main">
+        <header className="ciudadano-header">
+          <h1>Portal de Atención al Ciudadano</h1>
+          <div className="ciudadano-avatar">C</div>
         </header>
 
-        <div className="content-wrapper">
+        <div className="ciudadano-content">
           
-          {/* LÓGICA DE PANTALLAS: Si hay un trámite seleccionado, mostramos la guía. Si no, el buscador */}
-          {tramiteSeleccionado ? (
-            
-            // ==========================================
-            // PANTALLA 2: DETALLE DEL TRÁMITE
-            // ==========================================
-            <div className="detalle-tramite">
-              <button className="btn-volver-buscador" onClick={() => setTramiteSeleccionado(null)}>
-                ← Volver al buscador
+          {/* ========================================== */}
+          {/* VISTA 1: BUSCADOR DE TRÁMITES              */}
+          {/* ========================================== */}
+          {vistaActual === 'buscador' && !tramiteSeleccionado && (
+            <div className="buscador-section">
+              <div className="search-box-container">
+                <h2>¿Qué trámite necesitas realizar hoy?</h2>
+                <div className="search-bar">
+                  <input 
+                    type="text" 
+                    placeholder="Ej. Sacar pasaporte, renovar DNI, multas..." 
+                    value={terminoBusqueda}
+                    onChange={(e) => setTerminoBusqueda(e.target.value)}
+                  />
+                  <button className="btn-search" onClick={registrarBusquedaSilenciosa}>Buscar</button>
+                </div>
+              </div>
+
+              <div className="resultados-grid">
+                {terminoBusqueda && tramitesFiltrados.length === 0 ? (
+                  <p style={{textAlign: 'center', color: '#64748b', marginTop: '20px'}}>No encontramos resultados para tu búsqueda.</p>
+                ) : (
+                  tramitesFiltrados.map(tramite => (
+                    <div key={tramite.id} className="tramite-card-citizen" onClick={() => setTramiteSeleccionado(tramite)}>
+                      <span className="badge-entidad">{tramite.entidad}</span>
+                      <h3>{tramite.titulo}</h3>
+                      <p className="tramite-desc-short">{tramite.descripcion}</p>
+                      <div className="tramite-footer">
+                        <span>Costo: S/ {tramite.costo}</span>
+                        <span style={{color: '#3b82f6', fontWeight: 'bold'}}>Ver guía ➔</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================== */}
+          {/* VISTA 2: DIRECTORIO DE ENTIDADES (NUEVO)   */}
+          {/* ========================================== */}
+          {vistaActual === 'entidades' && !tramiteSeleccionado && (
+            <div className="entidades-section">
+              <h2 style={{ color: '#1e293b', marginBottom: '5px' }}>Directorio de Instituciones</h2>
+              <p style={{ color: '#64748b', marginBottom: '25px' }}>Explora todas las entidades del Estado y los trámites que administran.</p>
+              
+              <div className="entidades-grid">
+                {listaEntidades.length === 0 ? (
+                  <p>Cargando entidades...</p>
+                ) : (
+                  listaEntidades.map(ent => (
+                    <div key={ent.id} className="entidad-card-visual">
+                      <img 
+                        src={ent.logo_url || "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Flag_of_Peru_%28state%29.svg/800px-Flag_of_Peru_%28state%29.svg.png"} 
+                        alt={`Logo de ${ent.sigla}`} 
+                        className="entidad-card-img"
+                        style={{ objectFit: 'contain', padding: '10px', backgroundColor: '#f8fafc' }}
+                        onError={(e) => {
+                          e.target.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Flag_of_Peru_%28state%29.svg/800px-Flag_of_Peru_%28state%29.svg.png";
+                        }}
+                      />
+                      <div className="entidad-card-body">
+                        <h3 className="entidad-sigla">{ent.sigla}</h3>
+                        <p className="entidad-nombre">{ent.nombre_completo}</p>
+                        
+                        <hr className="entidad-divider" />
+                        <button 
+                          className="btn-ver-tramites"
+                          onClick={() => {
+                            setTerminoBusqueda(ent.sigla); // Filtra el buscador por esta sigla
+                            setVistaActual('buscador'); // Lo lleva al buscador
+                          }}
+                        >
+                          Ver sus trámites ➔
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================== */}
+          {/* VISTA: DETALLE DEL TRÁMITE                 */}
+          {/* ========================================== */}
+          {tramiteSeleccionado && (
+            <div className="detalle-tramite-container">
+              <button className="btn-volver" onClick={() => setTramiteSeleccionado(null)}>
+                ← Volver a resultados
               </button>
               
               <div className="detalle-header">
-                <span className="detalle-entidad">{tramiteSeleccionado.entidad}</span>
-                <h2 className="detalle-titulo">{tramiteSeleccionado.titulo}</h2>
+                <span className="badge-entidad">{tramiteSeleccionado.entidad}</span>
+                <h2>{tramiteSeleccionado.titulo}</h2>
                 <p className="detalle-descripcion">{tramiteSeleccionado.descripcion}</p>
-              </div>
-
-              <div className="detalle-info-grid">
-                <div className="info-box">
-                  <span className="info-label">Costo Oficial</span>
-                  <span className="info-valor">S/ {tramiteSeleccionado.costo}</span>
-                </div>
-                <div className="info-box">
-                  <span className="info-label">Modalidad</span>
-                  <span className="info-valor" style={{ textTransform: 'capitalize' }}>
-                    {tramiteSeleccionado.modalidad}
-                  </span>
-                </div>
-                <div className="info-box">
-                  <span className="info-label">Código</span>
-                  <span className="info-valor">{tramiteSeleccionado.codigo_interno || 'N/A'}</span>
+                <div className="detalle-meta">
+                  <div className="meta-box"><strong>Modalidad:</strong> {tramiteSeleccionado.modalidad}</div>
+                  <div className="meta-box"><strong>Costo:</strong> S/ {tramiteSeleccionado.costo}</div>
                 </div>
               </div>
 
-              <div className="detalle-seccion">
-                <h3>📝 Requisitos Previos</h3>
-                <ul className="requisitos-lista">
-                  {obtenerListaSegura(tramiteSeleccionado.requisitos).map((req, i) => (
-                    <li key={i}>{req}</li>
-                  ))}
-                </ul>
-              </div>
+              <div className="detalle-body">
+                <div className="requisitos-section">
+                  <h3>📋 Requisitos Previos</h3>
+                  <ul>
+                    {obtenerListaSegura(tramiteSeleccionado.requisitos).map((req, i) => (
+                      <li key={i}>{req}</li>
+                    ))}
+                  </ul>
+                </div>
 
-              <div className="detalle-seccion">
-                <h3>🛤️ Guía Paso a Paso</h3>
-                <div className="pasos-timeline">
-                  {obtenerListaSegura(tramiteSeleccionado.pasos).map((paso, i) => (
-                    <div key={paso.id || i} className="paso-card">
-                      <div className="paso-numero">{i + 1}</div>
+                <div className="pasos-section">
+                  <h3>🚶‍♂️ Guía Paso a Paso</h3>
+                  {obtenerListaSegura(tramiteSeleccionado.pasos).map((paso, index) => (
+                    <div key={index} className="paso-card">
+                      <div className="paso-numero">{index + 1}</div>
                       <div className="paso-contenido">
                         <h4>{paso.titulo}</h4>
                         <p>{paso.instrucciones}</p>
-                        {/* Si este paso tiene un archivoUrl guardado, mostramos el botón */}
                         {paso.archivoUrl && (
-                          <a
-                            href={paso.archivoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn-descargar-pdf"
-                          >
+                          <a href={paso.archivoUrl} target="_blank" rel="noopener noreferrer" className="btn-descargar-pdf">
                             📄 Descargar Formato Oficial
                           </a>
                         )}
@@ -154,54 +217,6 @@ const PanelCiudadano = () => {
                 </div>
               </div>
             </div>
-
-          ) : (
-
-            // ==========================================
-            // PANTALLA 1: EL BUSCADOR PREDICTIVO
-            // ==========================================
-            <>
-              <div className="breadcrumbs">
-                <span className="crumb">Inicio</span> 
-                <span className="separator">&gt;</span> 
-                <span className="crumb current">Buscador de Trámites</span>
-              </div>
-
-              <h2 className="section-title">Buscador Predictivo</h2>
-              
-              <div className="search-container">
-                <input 
-                  type="text" 
-                  className="search-input" 
-                  placeholder="Escribe 'DNI' o intenta con otro término..." 
-                  value={terminoBusqueda}
-                  onChange={(e) => setTerminoBusqueda(e.target.value)} 
-                />
-                <button className="btn-search" onClick={registrarBusquedaSilenciosa}>Buscar</button>
-              </div>
-
-              <div className="results-grid">
-                {cargando ? (
-                  <div style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>Cargando trámites... ⏳</div>
-                ) : tramitesFiltrados.length > 0 ? (
-                  tramitesFiltrados.map((tramite) => (
-                    // AQUÍ ESTÁ LA MAGIA: Al hacer clic, guardamos el trámite en la memoria
-                    <div 
-                      key={tramite.id} 
-                      className="result-card" 
-                      onClick={() => setTramiteSeleccionado(tramite)}
-                    >
-                      <h3 className="card-title">{tramite.titulo}</h3>
-                      <span className="card-entity">{tramite.entidad}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>
-                    No se encontraron trámites para "{terminoBusqueda}"
-                  </div>
-                )}
-              </div>
-            </>
           )}
 
         </div>
