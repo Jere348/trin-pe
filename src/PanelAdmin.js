@@ -14,12 +14,13 @@ const PanelAdmin = () => {
   const [topBusquedas, setTopBusquedas] = useState([]);
 
   // ==========================================
-  // NUEVO: ESTADOS PARA LAS ENTIDADES
+  // ESTADOS PARA LAS ENTIDADES
   // ==========================================
   const [listaEntidades, setListaEntidades] = useState([]);
   const [nuevaSigla, setNuevaSigla] = useState('');
   const [nuevoNombreEntidad, setNuevoNombreEntidad] = useState('');
   const [nuevoLogoUrl, setNuevoLogoUrl] = useState('');
+  const [editandoEntidadId, setEditandoEntidadId] = useState(null); // NUEVO ESTADO PARA EDITAR
 
   // ==========================================
   // ESTADOS DEL FORMULARIO DE TRÁMITES
@@ -34,7 +35,12 @@ const PanelAdmin = () => {
   const [pasos, setPasos] = useState([{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
 
   // ==========================================
-  // CARGA DE DATOS INICIALES (AL ABRIR EL PANEL)
+  // ESTADOS PARA ALERTAS
+  // ==========================================
+  const [listaAlertas, setListaAlertas] = useState([]);
+
+  // ==========================================
+  // CARGA DE DATOS INICIALES
   // ==========================================
   const cargarTramitesAdmin = async () => {
     try {
@@ -57,10 +63,18 @@ const PanelAdmin = () => {
     } catch (error) { console.error("Error al cargar entidades", error); }
   };
 
+  const cargarAlertas = async () => {
+    try {
+      const respuesta = await fetch('https://trin-pe-backend.onrender.com/api/alertas');
+      if (respuesta.ok) setListaAlertas(await respuesta.json());
+    } catch (error) { console.error("Error al cargar alertas", error); }
+  };
+
   useEffect(() => {
     cargarTramitesAdmin();
     cargarMetricas();
-    cargarEntidades(); // Cargamos las entidades al inicio
+    cargarEntidades();
+    cargarAlertas();
   }, []);
 
   const obtenerListaSegura = (datos) => {
@@ -74,94 +88,78 @@ const PanelAdmin = () => {
   });
 
   // ==========================================
-  // LÓGICA DE ENTIDADES (CRUD)
+  // LÓGICA DE ENTIDADES (CRUD COMPLETADO)
   // ==========================================
   const guardarEntidad = async (e) => {
     e.preventDefault();
+    const url = editandoEntidadId 
+      ? `https://trin-pe-backend.onrender.com/api/entidades/${editandoEntidadId}` 
+      : 'https://trin-pe-backend.onrender.com/api/entidades';
+    const metodo = editandoEntidadId ? 'PUT' : 'POST';
+
     try {
-      const respuesta = await fetch('https://trin-pe-backend.onrender.com/api/entidades', {
-        method: 'POST',
+      const respuesta = await fetch(url, {
+        method: metodo,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sigla: nuevaSigla,
-          nombre_completo: nuevoNombreEntidad,
-          logo_url: nuevoLogoUrl
-        })
+        body: JSON.stringify({ sigla: nuevaSigla, nombre_completo: nuevoNombreEntidad, logo_url: nuevoLogoUrl })
       });
       if (respuesta.ok) {
-        alert('🏢 Entidad agregada con éxito');
-        setNuevaSigla('');
-        setNuevoNombreEntidad('');
-        setNuevoLogoUrl('');
-        cargarEntidades(); // Refrescamos la lista
+        alert(editandoEntidadId ? '🏢 Entidad actualizada con éxito' : '🏢 Entidad agregada con éxito');
+        cancelarEdicionEntidad();
+        cargarEntidades();
       }
-    } catch (error) {
-      alert('Error de conexión al guardar entidad');
-    }
+    } catch (error) { alert('Error de conexión al guardar entidad'); }
+  };
+
+  const iniciarEdicionEntidad = (ent) => {
+    setEditandoEntidadId(ent.id);
+    setNuevaSigla(ent.sigla);
+    setNuevoNombreEntidad(ent.nombre_completo);
+    setNuevoLogoUrl(ent.logo_url || '');
+  };
+
+  const cancelarEdicionEntidad = () => {
+    setEditandoEntidadId(null);
+    setNuevaSigla('');
+    setNuevoNombreEntidad('');
+    setNuevoLogoUrl('');
   };
 
   const eliminarEntidad = async (id) => {
-    const confirmar = window.confirm('⚠️ ¿Seguro que deseas eliminar esta entidad? No afectará a los trámites que ya la usan, pero ya no aparecerá en la lista para nuevos trámites.');
+    const confirmar = window.confirm('⚠️ ¿Seguro que deseas eliminar esta entidad? No afectará a los trámites que ya la usan.');
     if (!confirmar) return;
-
     try {
-      const respuesta = await fetch(`https://trin-pe-backend.onrender.com/api/entidades/${id}`, {
-        method: 'DELETE'
-      });
-      if (respuesta.ok) {
-        cargarEntidades(); // Refrescamos la lista
-      }
-    } catch (error) {
-      alert('Error al eliminar entidad');
-    }
+      const respuesta = await fetch(`https://trin-pe-backend.onrender.com/api/entidades/${id}`, { method: 'DELETE' });
+      if (respuesta.ok) cargarEntidades();
+    } catch (error) { alert('Error al eliminar entidad'); }
   };
 
   // ==========================================
   // FUNCIONES DE EDICIÓN Y ELIMINACIÓN DE TRÁMITES
   // ==========================================
   const limpiarFormulario = () => {
-    setEditandoId(null);
-    setTitulo(''); setCodigoInterno(''); setDescripcion(''); setEntidad(''); 
+    setEditandoId(null); setTitulo(''); setCodigoInterno(''); setDescripcion(''); setEntidad(''); 
     setCosto(''); setRequisitos(''); 
     setPasos([{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
   };
 
-  const abrirParaCrear = () => {
-    limpiarFormulario();
-    setVistaCatalogo('formulario');
-  };
+  const abrirParaCrear = () => { limpiarFormulario(); setVistaCatalogo('formulario'); };
 
   const abrirParaEditar = (tramite) => {
-    setEditandoId(tramite.id);
-    setTitulo(tramite.titulo);
-    setCodigoInterno(tramite.codigo_interno || '');
-    setDescripcion(tramite.descripcion);
-    setEntidad(tramite.entidad);
-    setModalidad(tramite.modalidad);
-    setCosto(tramite.costo);
-    
-    const listaReq = obtenerListaSegura(tramite.requisitos);
-    setRequisitos(listaReq.join('\n'));
-    
-    const listaPasos = obtenerListaSegura(tramite.pasos);
-    setPasos(listaPasos.length > 0 ? listaPasos : [{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
-    
+    setEditandoId(tramite.id); setTitulo(tramite.titulo); setCodigoInterno(tramite.codigo_interno || '');
+    setDescripcion(tramite.descripcion); setEntidad(tramite.entidad); setModalidad(tramite.modalidad); setCosto(tramite.costo);
+    const listaReq = obtenerListaSegura(tramite.requisitos); setRequisitos(listaReq.join('\n'));
+    const listaPasos = obtenerListaSegura(tramite.pasos); setPasos(listaPasos.length > 0 ? listaPasos : [{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
     setVistaCatalogo('formulario');
   };
 
   const eliminarTramite = async (id) => {
     const confirmar = window.confirm('⚠️ ¿Estás seguro de que deseas eliminar este trámite de forma permanente?');
     if (!confirmar) return;
-
     try {
       const respuesta = await fetch(`https://trin-pe-backend.onrender.com/api/tramites/${id}`, { method: 'DELETE' });
-      if (respuesta.ok) {
-        alert('🗑️ Trámite eliminado correctamente');
-        cargarTramitesAdmin(); 
-      }
-    } catch (error) {
-      alert('Error al eliminar el trámite');
-    }
+      if (respuesta.ok) { alert('🗑️ Trámite eliminado correctamente'); cargarTramitesAdmin(); }
+    } catch (error) { alert('Error al eliminar el trámite'); }
   };
 
   // ==========================================
@@ -177,71 +175,57 @@ const PanelAdmin = () => {
   const subirPDF = async (evento, idDelPaso) => {
     const archivo = evento.target.files[0];
     if (!archivo) return;
-
     actualizarPaso(idDelPaso, 'subiendo', true);
     const nombreUnico = `${Date.now()}-${archivo.name}`;
-
     try {
       const { error } = await supabase.storage.from('formatos-tramites').upload(nombreUnico, archivo);
       if (error) throw error;
       const { data: publicURLData } = supabase.storage.from('formatos-tramites').getPublicUrl(nombreUnico);
-      
       actualizarPaso(idDelPaso, 'archivoUrl', publicURLData.publicUrl);
       alert('✅ Archivo subido con éxito a la nube');
-    } catch (error) {
-      alert(`❌ Error real de Supabase: ${error.message}`);
-    } finally {
-      actualizarPaso(idDelPaso, 'subiendo', false);
-    }
+    } catch (error) { alert(`❌ Error de Supabase: ${error.message}`); } 
+    finally { actualizarPaso(idDelPaso, 'subiendo', false); }
   };
 
   const guardarTramite = async (e) => {
     e.preventDefault();
     const arrayRequisitos = requisitos.split('\n').filter(req => req.trim() !== '');
-    const paqueteDeDatos = {
-      titulo, codigo_interno: codigoInterno, descripcion, entidad, modalidad,
-      costo: parseFloat(costo) || 0, requisitos: arrayRequisitos, pasos 
-    };
-
+    const paqueteDeDatos = { titulo, codigo_interno: codigoInterno, descripcion, entidad, modalidad, costo: parseFloat(costo) || 0, requisitos: arrayRequisitos, pasos };
     const url = editandoId ? `https://trin-pe-backend.onrender.com/api/tramites/${editandoId}` : 'https://trin-pe-backend.onrender.com/api/tramites';
     const metodo = editandoId ? 'PUT' : 'POST';
-
     try {
-      const respuesta = await fetch(url, {
-        method: metodo,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paqueteDeDatos)
-      });
+      const respuesta = await fetch(url, { method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(paqueteDeDatos) });
       if (respuesta.ok) {
         alert(editandoId ? '✏️ ¡Trámite actualizado!' : '✅ ¡Guía publicada con éxito!');
-        cargarTramitesAdmin(); 
-        setVistaCatalogo('lista'); 
-      } else {
-        const errorData = await respuesta.json();
-        alert('❌ Error al guardar: ' + errorData.error);
-      }
+        cargarTramitesAdmin(); setVistaCatalogo('lista'); 
+      } else { const errorData = await respuesta.json(); alert('❌ Error al guardar: ' + errorData.error); }
     } catch (error) { alert('⚠️ Error de conexión.'); }
   };
 
   const exportarCSV = () => {
-    if (listaTramites.length === 0) {
-      alert("No hay trámites en el catálogo para exportar.");
-      return;
-    }
+    if (listaTramites.length === 0) { alert("No hay trámites en el catálogo para exportar."); return; }
     const cabeceras = ["ID", "Código", "Título", "Entidad", "Modalidad", "Costo (S/)"];
-    const filas = listaTramites.map(t => [
-      t.id, t.codigo_interno || 'N/A', `"${t.titulo}"`, `"${t.entidad}"`, t.modalidad, t.costo
-    ]);
+    const filas = listaTramites.map(t => [t.id, t.codigo_interno || 'N/A', `"${t.titulo}"`, `"${t.entidad}"`, t.modalidad, t.costo]);
     const contenidoCSV = [cabeceras.join(","), ...filas.map(f => f.join(","))].join("\n");
     const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const enlace = document.createElement("a");
     enlace.setAttribute("href", url);
     enlace.setAttribute("download", `Reporte_Tramites_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
-    document.body.appendChild(enlace);
-    enlace.click();
-    document.body.removeChild(enlace);
+    document.body.appendChild(enlace); enlace.click(); document.body.removeChild(enlace);
   };
+
+  // ==========================================
+  // LÓGICA DE RESOLUCIÓN DE ALERTAS
+  // ==========================================
+  const resolverAlerta = async (id) => {
+    try {
+      const respuesta = await fetch(`https://trin-pe-backend.onrender.com/api/alertas/${id}/resolver`, { method: 'PUT' });
+      if (respuesta.ok) cargarAlertas(); 
+    } catch (error) { alert('Error al procesar alerta'); }
+  };
+
+  const alertasPendientes = listaAlertas.filter(a => a.estado === 'PENDIENTE').length;
 
   return (
     <div className="admin-layout">
@@ -250,9 +234,10 @@ const PanelAdmin = () => {
         <nav className="sidebar-nav">
           <button className={`nav-item ${pestañaActiva === 'metricas' ? 'active' : ''}`} onClick={() => setPestañaActiva('metricas')}>📊 Dashboard de Métricas</button>
           <button className={`nav-item ${pestañaActiva === 'catalogo' ? 'active' : ''}`} onClick={() => setPestañaActiva('catalogo')}>📝 Gestión de Catálogo</button>
-          {/* NUEVO BOTÓN PARA ENTIDADES */}
           <button className={`nav-item ${pestañaActiva === 'entidades' ? 'active' : ''}`} onClick={() => setPestañaActiva('entidades')}>🏢 Gestión de Entidades</button>
-          <button className={`nav-item ${pestañaActiva === 'alertas' ? 'active' : ''}`} onClick={() => setPestañaActiva('alertas')}>🔔 Alertas del Sistema</button>
+          <button className={`nav-item ${pestañaActiva === 'alertas' ? 'active' : ''}`} onClick={() => { setPestañaActiva('alertas'); cargarAlertas(); }}>
+            🔔 Alertas y Reportes {alertasPendientes > 0 && <span style={{ background: '#ef4444', color: 'white', padding: '2px 8px', borderRadius: '10px', fontSize: '12px', marginLeft: '5px' }}>{alertasPendientes}</span>}
+          </button>
         </nav>
         <div className="sidebar-footer"><button className="btn-logout" onClick={() => navigate('/')}>🚪 Salir</button></div>
       </aside>
@@ -264,6 +249,7 @@ const PanelAdmin = () => {
         </header>
 
         <div className="admin-content">
+          
           {/* ========================================== */}
           {/* PESTAÑA 1: DASHBOARD DE MÉTRICAS           */}
           {/* ========================================== */}
@@ -272,12 +258,7 @@ const PanelAdmin = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2 className="section-title" style={{ color: '#1e3a8a', margin: 0 }}>Métricas de Búsqueda</h2>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <select className="admin-dropdown-filter">
-                    <option>Filtro: Último Mes</option>
-                    <option>Filtro: Últimos 7 Días</option>
-                    <option>Filtro: Todo el tiempo</option>
-                  </select>
-                  <button className="btn-edit" onClick={cargarMetricas}>🔄</button>
+                  <button className="btn-edit" onClick={cargarMetricas}>🔄 Actualizar</button>
                 </div>
               </div>
 
@@ -328,10 +309,6 @@ const PanelAdmin = () => {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div><h2 className="section-title" style={{ color: '#1e3a8a', margin: 0 }}>Exportar Catálogo</h2></div>
-                <select className="admin-dropdown-filter">
-                  <option>DB Estándar</option>
-                  <option>DB Respaldos</option>
-                </select>
               </div>
               <div style={{ marginTop: '15px' }}>
                 <button className="btn-export-green" onClick={exportarCSV}>⬇️ Exportar Reporte a CSV</button>
@@ -405,7 +382,6 @@ const PanelAdmin = () => {
                   <div className="input-row">
                     <div className="input-group">
                       <label>Entidad Responsable</label>
-                      {/* MAGIA: EL SELECT AHORA LEE DE LA BASE DE DATOS */}
                       <select required value={entidad} onChange={(e) => setEntidad(e.target.value)}>
                         <option value="">Selecciona una entidad...</option>
                         {listaEntidades.map((ent) => (
@@ -470,48 +446,62 @@ const PanelAdmin = () => {
           )}
 
           {/* ========================================== */}
-          {/* PESTAÑA 3: GESTIÓN DE ENTIDADES (NUEVO)      */}
+          {/* PESTAÑA 3: GESTIÓN DE ENTIDADES            */}
           {/* ========================================== */}
           {pestañaActiva === 'entidades' && (
             <div className="admin-section">
               <h2 className="section-title">Catálogo de Entidades del Estado</h2>
               <p style={{color: '#64748b', marginBottom: '20px'}}>
-                Agrega nuevas instituciones públicas para que estén disponibles al crear trámites.
+                Agrega o modifica las instituciones públicas para que estén disponibles al crear trámites.
               </p>
 
-              {/* Formulario para agregar entidad */}
               <div className="admin-card form-card" style={{ marginBottom: '30px' }}>
-                <form style={{ display: 'flex', gap: '15px', alignItems: 'flex-end' }} onSubmit={guardarEntidad}>
-                  <div className="input-group" style={{ flex: 1, margin: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <h3 style={{ marginTop: 0, marginBottom: '15px' }}>
+                     {editandoEntidadId ? '✏️ Editando Entidad' : '✨ Nueva Entidad'}
+                   </h3>
+                </div>
+                
+                <form style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }} onSubmit={guardarEntidad}>
+                  <div className="input-group" style={{ flex: 1, margin: 0, minWidth: '150px' }}>
                     <label>Sigla (Ej: SUNEDU)</label>
                     <input type="text" required value={nuevaSigla} onChange={(e) => setNuevaSigla(e.target.value)} />
                   </div>
-                  <div className="input-group" style={{ flex: 3, margin: 0 }}>
-                    <label>Nombre Completo (Ej: Superintendencia Nacional...)</label>
+                  <div className="input-group" style={{ flex: 2, margin: 0, minWidth: '200px' }}>
+                    <label>Nombre Completo</label>
                     <input type="text" required value={nuevoNombreEntidad} onChange={(e) => setNuevoNombreEntidad(e.target.value)} />
                   </div>
-                  <div className="input-group" style={{ flex: 3, margin: 0 }}>
+                  <div className="input-group" style={{ flex: 2, margin: 0, minWidth: '200px' }}>
                     <label>URL del Logo / Foto</label>
                     <input type="text" value={nuevoLogoUrl} onChange={(e) => setNuevoLogoUrl(e.target.value)} placeholder="https://.../logo.png" />
                   </div>
-                  <button type="submit" className="btn-primary-admin" style={{ padding: '12px 20px', height: 'max-content' }}>
-                    + Agregar
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    {editandoEntidadId && (
+                      <button type="button" onClick={cancelarEdicionEntidad} style={{ padding: '12px 20px', backgroundColor: '#e2e8f0', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+                        Cancelar
+                      </button>
+                    )}
+                    <button type="submit" className="btn-primary-admin" style={{ padding: '12px 20px', height: 'max-content' }}>
+                      {editandoEntidadId ? '💾 Guardar' : '+ Agregar'}
+                    </button>
+                  </div>
                 </form>
               </div>
 
-              {/* Lista de entidades registradas */}
               <div className="tramites-list-grid">
                 {listaEntidades.length === 0 ? (
                   <p style={{color: '#64748b', textAlign: 'center'}}>No hay entidades registradas. Comienza agregando una.</p>
                 ) : (
                   listaEntidades.map((ent) => (
-                    <div key={ent.id} className="admin-tramite-card" style={{ padding: '15px 20px' }}>
-                      <div>
+                    <div key={ent.id} className="admin-tramite-card" style={{ padding: '15px 20px', alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
                         <h4 style={{margin: '0', fontSize: '18px', color: '#1e293b'}}>{ent.sigla}</h4>
                         <span style={{fontSize: '14px', color: '#64748b'}}>{ent.nombre_completo}</span>
                       </div>
-                      <button className="btn-delete" onClick={() => eliminarEntidad(ent.id)}>🗑️</button>
+                      <div className="card-actions" style={{ display: 'flex', gap: '10px' }}>
+                        <button className="btn-edit" onClick={() => iniciarEdicionEntidad(ent)}>✏️ Editar</button>
+                        <button className="btn-delete" onClick={() => eliminarEntidad(ent.id)}>🗑️</button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -520,12 +510,66 @@ const PanelAdmin = () => {
           )}
 
           {/* ========================================== */}
-          {/* PESTAÑA 4: ALERTAS                         */}
+          {/* PESTAÑA 4: ALERTAS Y REPORTES              */}
           {/* ========================================== */}
           {pestañaActiva === 'alertas' && (
             <div className="admin-section">
-              <h2 className="section-title">Alertas del Sistema</h2>
-              <p style={{color: '#64748b'}}>No hay alertas pendientes en este momento.</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 className="section-title" style={{ margin: 0 }}>Centro de Observabilidad</h2>
+                <button className="btn-edit" onClick={cargarAlertas}>🔄 Actualizar</button>
+              </div>
+              <p style={{color: '#64748b', marginBottom: '25px'}}>Monitorea en tiempo real los reportes de los ciudadanos y los fallos de la plataforma.</p>
+
+              <div className="tramites-list-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {listaAlertas.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '40px' }}>✅</span>
+                    <h3 style={{ color: '#10b981', margin: '10px 0 0 0' }}>Sistema Estable</h3>
+                    <p style={{ color: '#64748b' }}>No hay reportes ni alertas en este momento.</p>
+                  </div>
+                ) : (
+                  listaAlertas.map(alerta => (
+                    <div key={alerta.id} className="admin-card" style={{ padding: '20px', borderLeft: alerta.tipo === 'ERROR_SISTEMA' ? '5px solid #ef4444' : '5px solid #f59e0b', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 'bold', color: alerta.tipo === 'ERROR_SISTEMA' ? '#b91c1c' : '#b45309', backgroundColor: alerta.tipo === 'ERROR_SISTEMA' ? '#fef2f2' : '#fffbeb', padding: '4px 10px', borderRadius: '4px' }}>
+                            {alerta.tipo === 'ERROR_SISTEMA' ? '🚨 ERROR INTERNO' : '🙋‍♂️ REPORTE DE CIUDADANO'}
+                          </span>
+                          <span style={{ fontSize: '13px', color: '#64748b' }}>
+                            {new Date(alerta.fecha).toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        <h4 style={{ margin: '0 0 8px 0', color: '#1e293b', fontSize: '18px' }}>{alerta.motivo}</h4>
+                        <p style={{ margin: '0 0 15px 0', color: '#475569', fontSize: '15px', lineHeight: '1.5' }}>
+                          {alerta.descripcion || 'Sin descripción adicional proporcionada por el usuario.'}
+                        </p>
+                        
+                        {alerta.tramite_titulo && (
+                          <div style={{ fontSize: '13px', color: '#1d4ed8', backgroundColor: '#eff6ff', padding: '8px 12px', borderRadius: '6px', display: 'inline-block', border: '1px solid #bfdbfe' }}>
+                            <strong>Asociado al trámite:</strong> {alerta.tramite_titulo} (ID: {alerta.tramite_id})
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div style={{ marginLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {alerta.estado === 'PENDIENTE' ? (
+                          <button 
+                            onClick={() => resolverAlerta(alerta.id)} 
+                            style={{ backgroundColor: '#10b981', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          >
+                            ✓ Marcar como Resuelto
+                          </button>
+                        ) : (
+                          <div style={{ padding: '10px 15px', borderRadius: '6px', backgroundColor: '#f1f5f9', color: '#10b981', fontWeight: 'bold', textAlign: 'center', border: '1px solid #e2e8f0' }}>
+                            ✓ Resuelto
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           )}
 
