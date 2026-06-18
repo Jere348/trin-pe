@@ -18,11 +18,12 @@ function Login() {
   const manejarEnvio = async (e) => {
     e.preventDefault(); // Evita que la página se recargue
 
-    // Decidimos a qué ruta del backend enviar los datos
-// Decidimos a qué ruta del backend en la nube enviar los datos
-const url = esRegistro 
-    ? 'https://trin-pe-backend.onrender.com/api/registro' 
-    : 'https://trin-pe-backend.onrender.com/api/login';    // Empaquetamos los datos según el modo
+    // Decidimos a qué ruta del backend en la nube enviar los datos
+    const url = esRegistro 
+      ? 'https://trin-pe-backend.onrender.com/api/registro' 
+      : 'https://trin-pe-backend.onrender.com/api/login';    
+      
+    // Empaquetamos los datos según el modo
     const datosAEnviar = esRegistro 
       ? { nombre, dni, celular, correo, contrasena } 
       : { correo_dni: correo, contrasena };
@@ -38,10 +39,20 @@ const url = esRegistro
       const resultado = await respuesta.json();
 
       if (respuesta.ok) {
-        // Si el servidor responde con éxito (Status 200)
+        // ==========================================
+        // ¡NUEVO!: Guardar los datos en el navegador
+        // ==========================================
         alert(resultado.mensaje);
+        
         if (!esRegistro) {
-          navigate('/panel'); // <--- ¡AQUÍ ESTÁ EL CAMBIO CLAVE!
+          // Si es login, guardamos la credencial antes de viajar al panel
+          if (resultado.usuario) {
+            localStorage.setItem('usuarioCiudadano', JSON.stringify(resultado.usuario));
+          } else {
+            console.error("El servidor no devolvió el objeto 'usuario'.");
+          }
+          
+          navigate('/panel'); // Ahora sí, viajamos al panel
         } else {
           setEsRegistro(false); // Si fue registro exitoso, lo pasamos a la pantalla de login
         }
@@ -60,7 +71,6 @@ const url = esRegistro
         <img src={logoImg} alt="Logo" className="login-logo" />
         <h2 className="login-title">{esRegistro ? 'Crear Cuenta' : 'Iniciar Sesión'}</h2>
 
-        {/* Agregamos el evento onSubmit al formulario */}
         <form className="login-form" onSubmit={manejarEnvio}>
           {esRegistro && (
             <>

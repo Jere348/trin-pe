@@ -14,14 +14,19 @@ const PanelCiudadano = () => {
   const [listaFavoritos, setListaFavoritos] = useState([]);
 
   // ==========================================
-  // NUEVO: ESTADOS PARA EL MODAL DE REPORTES
+  // NUEVO: ESTADO DE CARGA PARA EVITAR EL "FALSO INVITADO"
+  // ==========================================
+  const [cargandoSesion, setCargandoSesion] = useState(true);
+
+  // ==========================================
+  // ESTADOS PARA EL MODAL DE REPORTES
   // ==========================================
   const [mostrarModalReporte, setMostrarModalReporte] = useState(false);
   const [motivoReporte, setMotivoReporte] = useState('Información desactualizada');
   const [descripcionReporte, setDescripcionReporte] = useState('');
 
   // ==========================================
-  // NUEVO: FUNCIÓN PARA REPORTAR ERRORES DEL SISTEMA (AUTOMÁTICO)
+  // FUNCIÓN PARA REPORTAR ERRORES DEL SISTEMA (AUTOMÁTICO)
   // ==========================================
   const reportarErrorAutomatico = async (motivoError, detalle) => {
     try {
@@ -47,7 +52,6 @@ const PanelCiudadano = () => {
       .then(data => setListaTramites(data))
       .catch(err => {
         console.error("Error trámites:", err);
-        // ¡Se dispara la alerta automática al Admin!
         reportarErrorAutomatico('Fallo de conexión a la Base de Datos', err.message);
       });
 
@@ -57,13 +61,23 @@ const PanelCiudadano = () => {
       .then(data => setListaEntidades(data))
       .catch(err => console.error("Error entidades:", err));
 
-    // 3. Verificar sesión
-    const usuarioGuardado = localStorage.getItem('usuarioCiudadano');
-    if (usuarioGuardado) {
-      const datosUsuario = JSON.parse(usuarioGuardado);
-      setUsuario(datosUsuario);
-      cargarFavoritos(datosUsuario.id);
-    }
+    // 3. Verificar sesión CON SEGURIDAD
+    const verificarUsuario = () => {
+      const usuarioGuardado = localStorage.getItem('usuarioCiudadano');
+      if (usuarioGuardado) {
+        try {
+          const datosUsuario = JSON.parse(usuarioGuardado);
+          setUsuario(datosUsuario);
+          cargarFavoritos(datosUsuario.id);
+        } catch (error) {
+          console.error("Error leyendo datos del usuario:", error);
+          localStorage.removeItem('usuarioCiudadano'); // Limpiamos si hay error
+        }
+      }
+      setCargandoSesion(false); // Terminó de buscar, ya podemos mostrar la app
+    };
+
+    verificarUsuario();
   }, []);
 
   const cargarFavoritos = async (idUsuario) => {
@@ -123,11 +137,9 @@ const PanelCiudadano = () => {
     setUsuario(null);
     setListaFavoritos([]);
     alert("Sesión cerrada");
+    navigate('/'); // Redirige a la página principal al cerrar sesión
   };
 
-  // ==========================================
-  // NUEVO: FUNCIÓN PARA ENVIAR REPORTE DEL CIUDADANO
-  // ==========================================
   const enviarReporte = async (e) => {
     e.preventDefault();
     try {
@@ -150,6 +162,18 @@ const PanelCiudadano = () => {
       alert('Error de conexión al enviar el reporte.');
     }
   };
+
+  // ==========================================
+  // PANTALLA DE CARGA MIENTRAS LEE LOCALSTORAGE
+  // ==========================================
+  if (cargandoSesion) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f8fafc', flexDirection: 'column' }}>
+        <h2 style={{ color: '#1e3a8a' }}>Cargando tu perfil...</h2>
+        <p style={{ color: '#64748b' }}>Conectando con Trámite Inteligente</p>
+      </div>
+    );
+  }
 
   return (
     <div className="ciudadano-layout">
@@ -287,7 +311,6 @@ const PanelCiudadano = () => {
               <div className="detalle-header">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span className="badge-entidad">{tramiteSeleccionado.entidad}</span>
-                  {/* NUEVO: CONTENEDOR DE ACCIONES (ESTRELLA + REPORTE) */}
                   <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                     <button 
                       onClick={() => setMostrarModalReporte(true)}
@@ -332,9 +355,6 @@ const PanelCiudadano = () => {
             </div>
           )}
 
-          {/* ========================================== */}
-          {/* NUEVO: MODAL HTML PARA EL REPORTE            */}
-          {/* ========================================== */}
           {mostrarModalReporte && (
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
               <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '10px', width: '90%', maxWidth: '400px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
