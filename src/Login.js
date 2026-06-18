@@ -41,14 +41,9 @@ const url = esRegistro
         // Si el servidor responde con éxito (Status 200)
         alert(resultado.mensaje);
         if (!esRegistro) {
-          
-          if (resultado.usuario) {
-            localStorage.setItem('usuarioCiudadano', JSON.stringify(resultado.usuario));
-          }
-          
-          navigate('/panel'); // Lo mandamos al panel
+          navigate('/panel'); // <--- ¡AQUÍ ESTÁ EL CAMBIO CLAVE!
         } else {
-          setEsRegistro(false); // Si fue registro exitoso, lo pasamos a login
+          setEsRegistro(false); // Si fue registro exitoso, lo pasamos a la pantalla de login
         }
       } else {
         // Si hay error (ej. DNI duplicado, contraseña incorrecta)
