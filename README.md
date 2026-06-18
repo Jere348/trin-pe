@@ -1,70 +1,37 @@
-# Getting Started with Create React App
+# 🚀 Trámite Inteligente (Trin-Pe)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Plataforma integral de digitalización y gestión de trámites estatales peruanos, diseñada para optimizar la interacción entre el ciudadano y las instituciones públicas mediante una interfaz intuitiva, eficiente y basada en datos.
 
-## Available Scripts
+## 🧐 Descripción del Problema
+Actualmente, los ciudadanos enfrentan una burocracia fragmentada: información desactualizada, procesos opacos, falta de digitalización y una pobre atención al usuario. El tiempo promedio invertido en consultas manuales es excesivo, generando frustración y una baja tasa de éxito en las gestiones ante entidades públicas (RENIEC, SUNARP, MTC, etc.).
 
-In the project directory, you can run:
+## 💡 Nuestra Solución
+**Trin-Pe** es un sistema Full-Stack que centraliza la información de trámites. Ofrece:
+* **Buscador Inteligente:** Algoritmo predictivo para encontrar trámites por entidad o palabra clave.
+* **Gestión Documental:** Acceso directo a formatos oficiales en la nube (PDF).
+* **Panel de Ciudadano:** Perfil personalizado con guías guardadas (favoritos).
+* **Panel de Administración (Observabilidad):** Dashboard profesional para gestionar el catálogo y monitorear fallas mediante alertas en tiempo real.
 
-### `npm start`
+## 🛠️ Stack Tecnológico
+* **Frontend:** React.js, React Router, CSS3 (Flexbox/Grid).
+* **Backend:** Node.js con Express.js (Arquitectura REST).
+* **Base de Datos:** PostgreSQL alojado en Supabase.
+* **Storage:** Supabase Storage (Almacenamiento de formatos).
+* **Despliegue:** Vercel (Frontend) y Render (Backend).
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 📊 Ciclo de Desarrollo (Sprint 1)
+Este proyecto fue desarrollado bajo una metodología ágil en ciclos de trabajo intenso. El enfoque principal del Sprint 1 fue la **robustez y la escalabilidad**:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. **Arquitectura de Datos:** Diseño de esquemas relacionales para usuarios, trámites, entidades, métricas y reportes.
+2. **API RESTful:** Desarrollo de endpoints para operaciones CRUD completas y comunicación eficiente.
+3. **Seguridad:** Implementación de encriptación (`bcrypt`) para credenciales y autenticación basada en estado.
+4. **Observabilidad:** Implementación de un sistema de detección de fallos y reportes ciudadanos para el Admin.
+5. **Despliegue Continuo (CI/CD):** Configuración de repositorios conectados a la nube para despliegue automático.
 
-### `npm test`
+## 💻 Instalación y Configuración
+Para ejecutar este entorno en tu máquina local:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. **Clonar los repositorios:**
+```bash
+   git clone [https://github.com/Jere348/trin-pe.git](https://github.com/Jere348/trin-pe.git)
+   git clone [https://github.com/Jere348/trin-pe-backend.git](https://github.com/Jere348/trin-pe-backend.git)
