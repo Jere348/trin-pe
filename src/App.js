@@ -1,13 +1,13 @@
-import React,{ useState } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import Login from './Login';
 import './App.css';
 import logoImg from './assets/logo.png';
 import heroImg from './assets/hero.jpg';
-import perfil1 from './assets/perfil1.png'; // Cambia .jpg por .png si es necesario
+import perfil1 from './assets/perfil1.png';
 import perfil2 from './assets/perfil2.png';
 import perfil3 from './assets/perfil3.png';
-import PanelCiudadano from './PanelCiudadano'; // Tu nuevo panel
+import PanelCiudadano from './PanelCiudadano';
 import PanelAdmin from './PanelAdmin';
 
 function Inicio() {
@@ -17,30 +17,58 @@ function Inicio() {
   const [mensaje, setMensaje] = useState('');
 
   const formularioLleno = nombre.trim() !== '' && correo.trim() !== '' && mensaje.trim() !== '';
-  
+
   return (
     <div className="App">
-      {/* NAVEGACIÓN */}
+
+      {/* ── NAVEGACIÓN ─────────────────────────────────── */}
       <nav className="navbar">
-          <img src={logoImg} alt="Logo TRIN.PE" className="logo-img" />        <ul className="nav-links">
+        <img src={logoImg} alt="Logo TRIN.PE" className="logo-img" />
+        <ul className="nav-links">
           <li><a href="#inicio">Inicio</a></li>
-          <li><a href="#catalogo">Catálogo de Trámites</a></li>
           <li><a href="#comofunciona">Cómo funciona</a></li>
           <li><a href="#beneficios">Beneficios</a></li>
           <li><a href="#testimonios">Testimonios</a></li>
           <li><a href="#contacto">Contacto</a></li>
         </ul>
-        <button className="btn-login" onClick={() => navigate('/login')}>Iniciar sesión</button>
+        <button className="btn-login" onClick={() => navigate('/login')}>
+          Iniciar sesión
+        </button>
       </nav>
 
-      {/* HERO SECTION */}
+      {/* ── HERO SECTION ───────────────────────────────── */}
       <header id="inicio" className="hero-section">
         <div className="hero-text">
-          <h1>Simplifica tus trámites en Perú</h1>
-          <p>Toda la información que necesitas, paso a paso y en un solo lugar.</p>
+          <div className="hero-eyebrow">Plataforma de trámites gubernamentales</div>
+          <h1>
+            Simplifica tus trámites<br />
+            en <em>Perú</em>, sin complicaciones
+          </h1>
+          <p>
+            Toda la información actualizada que necesitas, paso a paso y en un solo lugar.
+            Sin colas, sin confusión.
+          </p>
           <div className="hero-buttons">
-            <button className="btn-primary" onClick={() => navigate('/login')}>Buscar trámite</button>
-            <button className="btn-secondary" onClick={() => navigate('/login')}>Ver catálogo</button>
+            <button className="btn-primary" onClick={() => navigate('/login')}>
+              Buscar trámite
+            </button>
+            <button className="btn-secondary" onClick={() => navigate('/login')}>
+              Ver catálogo
+            </button>
+          </div>
+          <div className="hero-stats">
+            <div className="hero-stat">
+              <strong>+2,400</strong>
+              <span>Trámites guiados</span>
+            </div>
+            <div className="hero-stat">
+              <strong>98%</strong>
+              <span>Satisfacción</span>
+            </div>
+            <div className="hero-stat">
+              <strong>–60%</strong>
+              <span>Menos tiempo</span>
+            </div>
           </div>
         </div>
         <div className="hero-image-container">
@@ -48,156 +76,223 @@ function Inicio() {
         </div>
       </header>
 
-      {/* CÓMO FUNCIONA */}
+      {/* ── CÓMO FUNCIONA ──────────────────────────────── */}
       <section id="comofunciona" className="steps-section">
-        <h2 className="section-subtitle">CÓMO FUNCIONA - 3 PASOS</h2>
+        <div className="section-header">
+          <span className="section-label">El proceso</span>
+          <h2>Completa tu trámite en 3 pasos</h2>
+          <p>Sin sorpresas ni formularios interminables. Te llevamos de la mano.</p>
+        </div>
         <div className="steps-grid">
           <div className="step-card">
             <div className="step-number">1</div>
             <div className="step-info">
               <h3>Busca tu trámite</h3>
-              <p>Encuentra el trámite que necesitas de forma rápida y sencilla.</p>
+              <p>Encuentra el trámite que necesitas de forma rápida con nuestro buscador inteligente.</p>
             </div>
           </div>
           <div className="step-card">
             <div className="step-number">2</div>
             <div className="step-info">
               <h3>Sigue los pasos</h3>
-              <p>Te guiamos paso a paso con requisitos, costos y tiempos.</p>
+              <p>Te guiamos paso a paso con requisitos exactos, costos actualizados y tiempos reales.</p>
             </div>
           </div>
           <div className="step-card">
             <div className="step-number">3</div>
             <div className="step-info">
-              <h3>Completa tu trámite</h3>
-              <p>Evita errores y ahorra tiempo con nuestra guía inteligente.</p>
+              <h3>Completa sin errores</h3>
+              <p>Validaciones automáticas para que tu trámite no sea rechazado. Ahorra tiempo.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* POR QUÉ ELEGIRNOS */}
+      {/* ── BENEFICIOS ─────────────────────────────────── */}
       <section id="beneficios" className="benefits-section">
-        <h2 className="section-subtitle">POR QUÉ ELEGIRNOS?</h2>
+        <div className="section-header">
+          <span className="section-label">¿Por qué elegirnos?</span>
+          <h2>Todo lo que necesitas, sin lo que no</h2>
+          <p>Diseñado para ciudadanos, no para burócratas.</p>
+        </div>
         <div className="benefits-grid">
           <div className="benefit-card">
+            <div className="benefit-icon">✅</div>
             <h3>Menos errores</h3>
-            <p>Alertas y validaciones automáticas para evitar rechazos.</p>
+            <p>Alertas y validaciones automáticas para evitar rechazos en ventanilla.</p>
           </div>
           <div className="benefit-card">
-            <h3>Predicción de tiempo</h3>
-            <p>Conoce el tiempo estimado real de tus trámites.</p>
+            <div className="benefit-icon">⏱️</div>
+            <h3>Tiempo real estimado</h3>
+            <p>Conoce cuánto tardará tu trámite antes de comenzar, sin sorpresas.</p>
           </div>
           <div className="benefit-card">
+            <div className="benefit-icon">📋</div>
             <h3>Guía paso a paso</h3>
-            <p>Explicaciones claras y fáciles de seguir en cada paso.</p>
+            <p>Instrucciones claras y en lenguaje sencillo en cada etapa del proceso.</p>
           </div>
           <div className="benefit-card">
-            <h3>Información confiable</h3>
-            <p>Datos actualizados de entidades oficiales.</p>
+            <div className="benefit-icon">🏛️</div>
+            <h3>Fuentes oficiales</h3>
+            <p>Información verificada y actualizada directamente de entidades del Estado.</p>
           </div>
         </div>
       </section>
 
-     {/* TESTIMONIOS */}
+      {/* ── BANNER CTA ─────────────────────────────────── */}
+      <section className="cta-section">
+        <h2>¿Listo para simplificar tus trámites?</h2>
+        <p>Únete a miles de ciudadanos que ya ahorran tiempo con TRIN.PE</p>
+        <button className="btn-cta" onClick={() => navigate('/login')}>
+          Empezar ahora — es gratis
+        </button>
+      </section>
+
+      {/* ── TESTIMONIOS ────────────────────────────────── */}
       <section id="testimonios" className="testimonials-section">
-        <h2 className="section-subtitle">TESTIMONIOS</h2>
+        <div className="section-header">
+          <span className="section-label">Testimonios</span>
+          <h2>Lo que dicen nuestros usuarios</h2>
+        </div>
         <div className="testimonials-grid">
-          
+
           <div className="testimonial-card">
-            {/* Reemplazo 1 */}
             <img src={perfil1} alt="José R." className="avatar-img" />
-            <p>"Muy útil y fácil de usar. Me ayudó a ahorrar mucho tiempo en mis trámites."</p>
-            <span>- José R.</span>
+            <div className="testimonial-stars">★★★★★</div>
+            <p>"Muy útil y fácil de usar. Me ayudó a ahorrar mucho tiempo en mis trámites. Ya no tengo que ir a la municipalidad tres veces."</p>
+            <span className="testimonial-author">José R.</span><br />
+            <span className="testimonial-role">Emprendedor, Lima</span>
           </div>
 
           <div className="testimonial-card">
-            {/* Reemplazo 2 */}
             <img src={perfil2} alt="María G." className="avatar-img" />
-            <p>"Las guías son claras y las alertas me evitaron muchos errores. Excelente plataforma."</p>
-            <span>- María G.</span>
+            <div className="testimonial-stars">★★★★★</div>
+            <p>"Las guías son claras y las alertas me evitaron muchos errores. Pude hacer mi trámite de primera sin que me rechacen nada."</p>
+            <span className="testimonial-author">María G.</span><br />
+            <span className="testimonial-role">Contadora, Arequipa</span>
           </div>
 
           <div className="testimonial-card">
-            {/* Reemplazo 3 */}
             <img src={perfil3} alt="Carlos M." className="avatar-img" />
-            <p>"Ahora sé cuánto tiempo tardará mi trámite. Muy recomendado."</p>
-            <span>- Carlos M.</span>
+            <div className="testimonial-stars">★★★★★</div>
+            <p>"Ahora sé exactamente cuánto tiempo tardará mi trámite antes de empezar. Me organizo mucho mejor. Muy recomendado."</p>
+            <span className="testimonial-author">Carlos M.</span><br />
+            <span className="testimonial-role">Ingeniero, Trujillo</span>
           </div>
 
         </div>
       </section>
 
-      {/* FORMULARIO DE CONTACTO */}
+      {/* ── FORMULARIO DE CONTACTO ─────────────────────── */}
       <section id="contacto" className="contact-section">
         <div className="contact-text">
-          <h2>Tienes dudas?</h2>
-          <p>Escríbenos y te ayudamos.</p>
+          <span className="section-label">Contacto</span>
+          <h2>¿Tienes dudas?</h2>
+          <p>
+            Estamos aquí para ayudarte. Escríbenos y te respondemos
+            en menos de 24 horas hábiles.
+          </p>
+          <div className="contact-info-items">
+            <div className="contact-info-item">
+              <span className="contact-info-icon">📧</span>
+              soporte@trin.pe
+            </div>
+            <div className="contact-info-item">
+              <span className="contact-info-icon">🕐</span>
+              Lun – Vie, 8am – 6pm
+            </div>
+            <div className="contact-info-item">
+              <span className="contact-info-icon">📍</span>
+              Lima, Perú
+            </div>
+          </div>
         </div>
         <form className="contact-form">
-          <input 
-            type="text" 
-            placeholder="Nombre" 
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-          />
-          <input 
-            type="email" 
-            placeholder="Correo electrónico" 
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-          />
-          <textarea 
-            placeholder="Mensaje" 
-            rows="4"
+          <div className="form-row">
+            <input
+              type="text"
+              placeholder="Tu nombre"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+            />
+            <input
+              type="email"
+              placeholder="Correo electrónico"
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
+            />
+          </div>
+          <textarea
+            placeholder="¿En qué podemos ayudarte?"
+            rows="5"
             value={mensaje}
             onChange={(e) => setMensaje(e.target.value)}
           ></textarea>
-          
-          {/* El botón ahora cambia de clase si el formulario está lleno */}
-          <button 
-            type="button" 
+          <button
+            type="button"
             className={`btn-send ${formularioLleno ? 'btn-active' : ''}`}
             disabled={!formularioLleno}
           >
-            Enviar mensaje
+            {formularioLleno ? 'Enviar mensaje →' : 'Completa el formulario'}
           </button>
         </form>
       </section>
 
-      {/* FOOTER */}
+      {/* ── FOOTER ─────────────────────────────────────── */}
       <footer className="footer">
-        <div className="footer-brand">
-        <img src={logoImg} alt="Logo Trámite Inteligente" className="logo-img-small" />          <p className="brand-name">Trámite Inteligente Perú</p>
-          <p className="copyright">© 2026 Todos los derechos reservados.</p>
+        <div className="footer-top">
+          <div className="footer-brand">
+            <img src={logoImg} alt="Logo Trámite Inteligente" className="logo-img-small" />
+            <p className="brand-tagline">
+              La plataforma más completa para gestionar tus trámites
+              gubernamentales en Perú.
+            </p>
+            <div className="social-icons">
+              <span className="icon" title="Facebook">FB</span>
+              <span className="icon" title="Instagram">IG</span>
+              <span className="icon" title="LinkedIn">LI</span>
+            </div>
+          </div>
+
+          <div className="footer-links">
+            <h4>Plataforma</h4>
+            <ul>
+              <li><a href="#inicio">Inicio</a></li>
+              <li><a href="#catalogo">Catálogo</a></li>
+              <li><a href="#comofunciona">Cómo funciona</a></li>
+              <li><a href="#beneficios">Beneficios</a></li>
+            </ul>
+          </div>
+
+          <div className="footer-links">
+            <h4>Soporte</h4>
+            <ul>
+              <li><a href="#faq">Preguntas frecuentes</a></li>
+              <li><a href="#contacto">Contacto</a></li>
+              <li><a href="#terminos">Términos y condiciones</a></li>
+              <li><a href="#privacidad">Privacidad</a></li>
+            </ul>
+          </div>
+
+          <div className="footer-social footer-links">
+            <h4>Institucional</h4>
+            <ul>
+              <li><a href="#nosotros">Sobre nosotros</a></li>
+              <li><a href="#prensa">Prensa</a></li>
+              <li><a href="#alianzas">Alianzas</a></li>
+            </ul>
+          </div>
         </div>
-        <div className="footer-links">
-          <h4>ENLACES</h4>
-          <ul>
-            <li><a href="#inicio">Inicio</a></li>
-            <li><a href="#catalogo">Catálogo de Trámites</a></li>
-            <li><a href="#comofunciona">Cómo funciona</a></li>
-            <li><a href="#beneficios">Beneficios</a></li>
-            <li><a href="#contacto">Contacto</a></li>
-          </ul>
-        </div>
-        <div className="footer-links">
-          <h4>RECURSOS</h4>
-          <ul>
-            <li><a href="#faq">Preguntas frecuentes</a></li>
-            <li><a href="#terminos">Términos y condiciones</a></li>
-            <li><a href="#privacidad">Política de privacidad</a></li>
-          </ul>
-        </div>
-        <div className="footer-social">
-          <h4>SÍGUENOS</h4>
-          <div className="social-icons">
-            <span className="icon">FB</span>
-            <span className="icon">IG</span>
-            <span className="icon">LI</span>
+
+        <div className="footer-bottom">
+          <p className="copyright">© 2026 Trámite Inteligente Perú · Todos los derechos reservados.</p>
+          <div className="footer-badges">
+            <span className="footer-badge">🔒 Datos seguros</span>
+            <span className="footer-badge">🏛️ Información oficial</span>
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
@@ -209,8 +304,6 @@ function App() {
         <Route path="/" element={<Inicio />} />
         <Route path="/login" element={<Login />} />
         <Route path="/panel" element={<PanelCiudadano />} />
-        
-        {/* LA NUEVA RUTA DEL ADMIN */}
         <Route path="/admin" element={<PanelAdmin />} />
       </Routes>
     </Router>
