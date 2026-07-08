@@ -390,7 +390,7 @@ const PanelCiudadano = () => {
                     <h3>Requisitos indispensables</h3>
                     <ul className="lista-items" style={{ padding: 0 }}>
                       {parseList(tramiteSeleccionado.requisitos).map((req, index) => (
-                        <li key={index}>{req.descripcion}</li>
+                        <li key={index}>{typeof req === 'string' ? req : req.descripcion}</li>
                       ))}
                     </ul>
                   </div>
