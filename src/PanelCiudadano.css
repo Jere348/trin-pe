@@ -577,6 +577,118 @@
   background: var(--accent);
 }
 
+/* ==========================================
+   CONFIGURACIÓN Y ACCESIBILIDAD (A11Y)
+   ========================================== */
+
+.configuracion-wrapper {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+
+.config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.config-info strong {
+  display: block;
+  font-size: 16px;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.config-info p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Toggle Switch UI */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--border);
+  transition: .3s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .3s;
+  box-shadow: var(--shadow-sm);
+}
+.slider.round { border-radius: 28px; }
+.slider.round:before { border-radius: 50%; }
+
+.toggle-switch input:checked + .slider { background-color: var(--success); }
+.toggle-switch input:focus + .slider { box-shadow: 0 0 1px var(--success); }
+.toggle-switch input:checked + .slider:before { transform: translateX(22px); }
+
+/* --- A11Y OVERRIDES --- */
+body.a11y-large-text {
+  font-size: 110%;
+}
+body.a11y-large-text .menu-item { font-size: 16px; }
+body.a11y-large-text .tramite-title { font-size: 20px; }
+body.a11y-large-text .tramite-desc { font-size: 16px; }
+body.a11y-large-text .btn-primary { font-size: 16px; padding: 12px 24px; }
+body.a11y-large-text h1, body.a11y-large-text h2, body.a11y-large-text h3 { font-size: 115%; }
+
+body.a11y-high-contrast {
+  --background: #000000 !important;
+  --white: #111111 !important;
+  --text-main: #FFFFFF !important;
+  --text-secondary: #E0E0E0 !important;
+  --primary: #FFFF00 !important;
+  --primary-dark: #FFFF00 !important;
+  --accent: #FFFF00 !important;
+  --accent-light: #333300 !important;
+  --border: #444444 !important;
+}
+
+body.a11y-high-contrast .btn-primary {
+  background: var(--primary);
+  color: #000;
+  font-weight: 900;
+}
+body.a11y-high-contrast .sidebar {
+  background: #000;
+  border-right: 2px solid var(--primary);
+}
+body.a11y-high-contrast .menu-item.active {
+  background: var(--primary);
+  color: #000;
+}
+body.a11y-high-contrast .tramite-card {
+  border: 2px solid var(--border);
+  background: #111;
+}
+body.a11y-high-contrast .search-hero {
+  background: #000;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+}
+body.a11y-high-contrast .search-hero h1 { color: var(--primary); }
+
 /* --- RESPONSIVIDAD (Ciudadano) --- */
 @media screen and (max-width: 900px) {
   .sidebar { width: 100%; height: auto; position: fixed; bottom: 0; top: auto; flex-direction: row; padding: 10px; z-index: 100; border-right: none; border-top: 1px solid var(--border); box-shadow: 0 -4px 12px rgba(0,0,0,0.05); }

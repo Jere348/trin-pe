@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, clearSession, getSession, getUser } from './api';
 import { useToast } from './Toast';
-import { Search, Building2, Bookmark, LogOut, ArrowLeft, AlertTriangle, Star } from 'lucide-react';
+import { Search, Building2, Bookmark, LogOut, ArrowLeft, AlertTriangle, Star, Settings, Volume2, Type, Eye } from 'lucide-react';
 import './PanelCiudadano.css';
 import logoImg from './assets/logo.png';
 import Chatbot from './Chatbot';
@@ -34,6 +34,41 @@ const PanelCiudadano = () => {
   const [mostrarModalReporte, setMostrarModalReporte] = useState(false);
   const [motivoReporte, setMotivoReporte] = useState('Informacion desactualizada');
   const [descripcionReporte, setDescripcionReporte] = useState('');
+
+  const [configA11y, setConfigA11y] = useState({
+    altoContraste: localStorage.getItem('a11y_contraste') === 'true',
+    textoGrande: localStorage.getItem('a11y_texto') === 'true',
+    lectorVoz: localStorage.getItem('a11y_voz') === 'true',
+  });
+
+  useEffect(() => {
+    if (configA11y.altoContraste) document.body.classList.add('a11y-high-contrast');
+    else document.body.classList.remove('a11y-high-contrast');
+
+    if (configA11y.textoGrande) document.body.classList.add('a11y-large-text');
+    else document.body.classList.remove('a11y-large-text');
+
+    localStorage.setItem('a11y_contraste', configA11y.altoContraste);
+    localStorage.setItem('a11y_texto', configA11y.textoGrande);
+    localStorage.setItem('a11y_voz', configA11y.lectorVoz);
+  }, [configA11y]);
+
+  const toggleA11y = (key) => {
+    setConfigA11y(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const leerEnVozAlta = (texto) => {
+    if (!configA11y.lectorVoz || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'es-PE';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const detenerVoz = () => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  };
 
   const reportarErrorAutomatico = async (motivoError, detalle) => {
     try {
@@ -205,8 +240,11 @@ const PanelCiudadano = () => {
           <button className={`menu-item ${vistaActual === 'entidades' ? 'active' : ''}`} onClick={() => { setVistaActual('entidades'); setTramiteSeleccionado(null); }}>
             <Building2 size={20} /> Directorio de entidades
           </button>
-          <button className={`menu-item ${vistaActual === 'favoritos' ? 'active' : ''}`} onClick={() => { setVistaActual('favoritos'); setTramiteSeleccionado(null); }}>
+          <button className={`menu-item ${vistaActual === 'favoritos' ? 'active' : ''}`} onClick={() => { setVistaActual('favoritos'); setTramiteSeleccionado(null); detenerVoz(); }}>
             <Bookmark size={20} /> Mis guías guardadas
+          </button>
+          <button className={`menu-item ${vistaActual === 'configuracion' ? 'active' : ''}`} onClick={() => { setVistaActual('configuracion'); setTramiteSeleccionado(null); detenerVoz(); }}>
+            <Settings size={20} /> Configuración
           </button>
         </nav>
         {usuario && (
@@ -339,20 +377,24 @@ const PanelCiudadano = () => {
 
           {tramiteSeleccionado && (
             <div className="detalle-wrapper">
-              <button className="btn-volver" onClick={() => setTramiteSeleccionado(null)}>
-                <ArrowLeft size={18} /> Volver a resultados
-              </button>
-              
               <div className="detalle-header">
                 <div>
-                  <div className="detalle-meta" style={{ marginBottom: 16 }}>
-                    <span className="entidad-badge"><Building2 size={16}/> {tramiteSeleccionado.entidad}</span>
-                    <span className={`badge ${tramiteSeleccionado.modalidad.toLowerCase()}`}>{tramiteSeleccionado.modalidad}</span>
-                  </div>
+                  <button className="btn-volver" onClick={() => { setTramiteSeleccionado(null); detenerVoz(); }}>
+                    <ArrowLeft size={16} /> Volver a resultados
+                  </button>
                   <h1>{tramiteSeleccionado.titulo}</h1>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 18 }}>Costo oficial: <strong style={{ color: 'var(--primary)' }}>S/ {tramiteSeleccionado.costo}</strong></p>
+                  <div className="detalle-meta">
+                    <span className="entidad-badge">
+                      {entidadInfo?.logo_url && <img src={entidadInfo.logo_url} alt="Logo" />}
+                      {entidadInfo?.nombre_completo || tramiteSeleccionado.entidad}
+                    </span>
+                    <span className="costo-pill">S/ {tramiteSeleccionado.costo}</span>
+                    <span className={`badge ${tramiteSeleccionado.modalidad?.toLowerCase()}`}>
+                      {tramiteSeleccionado.modalidad}
+                    </span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
                   <button className="btn-reportar" onClick={() => setMostrarModalReporte(true)}>
                     <AlertTriangle size={16} /> Reportar error
                   </button>
@@ -421,6 +463,57 @@ const PanelCiudadano = () => {
                     <button type="submit" className="btn-primary">Enviar reporte</button>
                   </div>
                 </form>
+              </div>
+            </div>
+          {vistaActual === 'configuracion' && (
+            <div className="configuracion-wrapper animate-in">
+              <div className="section-title">
+                <Settings size={24} /> Configuración de Cuenta y Accesibilidad
+              </div>
+              
+              <div className="detalle-seccion">
+                <h3><Eye size={20} /> Accesibilidad Visual</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 20 }}>Ajusta la plataforma para facilitar la lectura.</p>
+                
+                <div className="config-item">
+                  <div className="config-info">
+                    <strong>Modo de Alto Contraste</strong>
+                    <p>Aumenta el contraste de los colores para mejorar la visibilidad (ideal para daltonismo o cataratas).</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input type="checkbox" checked={configA11y.altoContraste} onChange={() => toggleA11y('altoContraste')} />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+                
+                <hr style={{ borderTop: '1px solid var(--border)', margin: '16px 0' }} />
+                
+                <div className="config-item">
+                  <div className="config-info">
+                    <strong>Texto Grande (Escala 150%)</strong>
+                    <p>Aumenta el tamaño de todas las letras de la página.</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input type="checkbox" checked={configA11y.textoGrande} onChange={() => toggleA11y('textoGrande')} />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="detalle-seccion">
+                <h3><Volume2 size={20} /> Accesibilidad Auditiva</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 20 }}>Soporte de voz para personas con discapacidad visual o dificultad para leer.</p>
+                
+                <div className="config-item">
+                  <div className="config-info">
+                    <strong>Lector de Voz (Text-to-Speech)</strong>
+                    <p>Activa un botón en todos los trámites para que la página los lea en voz alta automáticamente.</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input type="checkbox" checked={configA11y.lectorVoz} onChange={() => toggleA11y('lectorVoz')} />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
               </div>
             </div>
           )}
