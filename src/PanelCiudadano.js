@@ -5,6 +5,7 @@ import { useToast } from './Toast';
 import { Search, Building2, Bookmark, LogOut, ArrowLeft, AlertTriangle, Star } from 'lucide-react';
 import './PanelCiudadano.css';
 import logoImg from './assets/logo.png';
+import Chatbot from './Chatbot';
 
 const FALLBACK_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Flag_of_Peru_%28state%29.svg/800px-Flag_of_Peru_%28state%29.svg.png';
 
@@ -424,6 +425,7 @@ const PanelCiudadano = () => {
             </div>
           )}
         </main>
+        <Chatbot />
     </div>
   );
 };
