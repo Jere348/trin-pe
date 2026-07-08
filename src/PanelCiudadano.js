@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, clearSession, getSession, getUser } from './api';
 import { useToast } from './Toast';
-import { Search, Building2, Bookmark, LogOut, ArrowLeft, AlertTriangle, Star, Settings, Volume2, Type, Eye } from 'lucide-react';
+import { Search, Building2, Bookmark, LogOut, ArrowLeft, AlertTriangle, Star, Settings, Volume2, Eye } from 'lucide-react';
 import './PanelCiudadano.css';
 import logoImg from './assets/logo.png';
 import Chatbot from './Chatbot';
@@ -384,10 +384,7 @@ const PanelCiudadano = () => {
                   </button>
                   <h1>{tramiteSeleccionado.titulo}</h1>
                   <div className="detalle-meta">
-                    <span className="entidad-badge">
-                      {entidadInfo?.logo_url && <img src={entidadInfo.logo_url} alt="Logo" />}
-                      {entidadInfo?.nombre_completo || tramiteSeleccionado.entidad}
-                    </span>
+                    <span className="entidad-badge"><Building2 size={16}/> {tramiteSeleccionado.entidad}</span>
                     <span className="costo-pill">S/ {tramiteSeleccionado.costo}</span>
                     <span className={`badge ${tramiteSeleccionado.modalidad?.toLowerCase()}`}>
                       {tramiteSeleccionado.modalidad}
@@ -402,6 +399,11 @@ const PanelCiudadano = () => {
                     <Star size={16} fill={esTramiteFavorito(tramiteSeleccionado.id) ? 'currentColor' : 'none'} />
                     {esTramiteFavorito(tramiteSeleccionado.id) ? 'Quitar guardado' : 'Guardar guía'}
                   </button>
+                  {configA11y.lectorVoz && (
+                    <button className="btn-primary" style={{ background: 'var(--success)' }} onClick={() => leerEnVozAlta(`${tramiteSeleccionado.titulo}. Costo: ${tramiteSeleccionado.costo} soles. Descripción: ${tramiteSeleccionado.descripcion}`)}>
+                      <Volume2 size={16} /> Escuchar Guía
+                    </button>
+                  )}
                 </div>
               </div>
 
