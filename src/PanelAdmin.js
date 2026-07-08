@@ -33,6 +33,8 @@ const PanelAdmin = () => {
   const [pasos, setPasos] = useState([{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
 
   const [listaAlertas, setListaAlertas] = useState([]);
+  const [busquedaCatalogo, setBusquedaCatalogo] = useState('');
+  const [busquedaEntidades, setBusquedaEntidades] = useState('');
 
   const cargarTramitesAdmin = async () => {
     try {
@@ -339,9 +341,15 @@ const PanelAdmin = () => {
             <div className="admin-panel-card">
               <div className="panel-header-row">
                 <h2 className="panel-title"><FileText size={24}/> Directorio de Trámites</h2>
-                <button className="btn-primary" onClick={abrirParaCrear}>
-                  <Plus size={18}/> Nuevo trámite
-                </button>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ padding: '6px 12px', background: 'var(--white)', border: '1px solid var(--border)', borderRadius: '20px', display: 'flex', alignItems: 'center', minWidth: 250 }}>
+                    <Search size={16} color="var(--text-light)" />
+                    <input type="text" placeholder="Buscar por título o código..." value={busquedaCatalogo} onChange={(e) => setBusquedaCatalogo(e.target.value)} style={{ border: 'none', outline: 'none', marginLeft: 8, width: '100%', fontSize: '14px' }} />
+                  </div>
+                  <button className="btn-primary" onClick={abrirParaCrear}>
+                    <Plus size={18}/> Nuevo trámite
+                  </button>
+                </div>
               </div>
               
               <div className="modern-table-wrapper">
@@ -356,7 +364,9 @@ const PanelAdmin = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {listaTramites.map(t => (
+                    {listaTramites
+                      .filter(t => t.titulo?.toLowerCase().includes(busquedaCatalogo.toLowerCase()) || t.codigo_interno?.toLowerCase().includes(busquedaCatalogo.toLowerCase()))
+                      .map(t => (
                       <tr key={t.id}>
                         <td style={{ color: 'var(--text-light)', fontWeight: 600 }}>{t.codigo_interno || '-'}</td>
                         <td style={{ fontWeight: 600 }}>{t.titulo}</td>
@@ -461,8 +471,16 @@ const PanelAdmin = () => {
 
           {pestañaActiva === 'entidades' && (
             <div className="admin-panel-card">
-              <h2 className="panel-title"><Building2 size={24}/> Gestión de Entidades Públicas</h2>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: 24, marginTop: 8 }}>Registra los ministerios, organismos y municipalidades que administran trámites.</p>
+              <div className="panel-header-row" style={{ alignItems: 'flex-start' }}>
+                <div>
+                  <h2 className="panel-title"><Building2 size={24}/> Gestión de Entidades Públicas</h2>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: 24, marginTop: 8 }}>Registra los ministerios, organismos y municipalidades que administran trámites.</p>
+                </div>
+                <div style={{ padding: '6px 12px', background: 'var(--white)', border: '1px solid var(--border)', borderRadius: '20px', display: 'flex', alignItems: 'center', minWidth: 250, marginTop: 4 }}>
+                  <Search size={16} color="var(--text-light)" />
+                  <input type="text" placeholder="Buscar entidad o sigla..." value={busquedaEntidades} onChange={(e) => setBusquedaEntidades(e.target.value)} style={{ border: 'none', outline: 'none', marginLeft: 8, width: '100%', fontSize: '14px' }} />
+                </div>
+              </div>
               
               <form onSubmit={guardarEntidad} className="form-grid" style={{ background: 'var(--background)', padding: 24, borderRadius: 16, marginBottom: 32 }}>
                 <div className="form-group">
@@ -496,7 +514,9 @@ const PanelAdmin = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {listaEntidades.map(ent => (
+                    {listaEntidades
+                      .filter(ent => ent.nombre_completo?.toLowerCase().includes(busquedaEntidades.toLowerCase()) || ent.sigla?.toLowerCase().includes(busquedaEntidades.toLowerCase()))
+                      .map(ent => (
                       <tr key={ent.id}>
                         <td><img src={ent.logo_url} alt="Logo" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'contain', background: 'var(--white)' }} /></td>
                         <td style={{ fontWeight: 600 }}>{ent.sigla}</td>
@@ -538,7 +558,7 @@ const PanelAdmin = () => {
                     <tbody>
                       {listaAlertas.map(alerta => (
                         <tr key={alerta.id} style={{ background: alerta.estado === 'PENDIENTE' ? 'rgba(239,68,68,0.02)' : 'transparent' }}>
-                          <td style={{ fontWeight: 600 }}>{alerta.tramites?.titulo || 'Trámite Eliminado'}</td>
+                          <td style={{ fontWeight: 600 }}>{alerta.tramites ? `${alerta.tramites.codigo_interno || 'SIN-CODIGO'} - ${alerta.tramites.titulo}` : 'Trámite Eliminado'}</td>
                           <td><span className="badge" style={{ background: 'var(--accent-light)', color: 'var(--primary)' }}>{alerta.motivo}</span></td>
                           <td>{alerta.descripcion}</td>
                           <td>{new Date(alerta.creado_en).toLocaleDateString()}</td>
