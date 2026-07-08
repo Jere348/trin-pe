@@ -558,7 +558,7 @@ const PanelAdmin = () => {
                     <tbody>
                       {listaAlertas.map(alerta => (
                         <tr key={alerta.id} style={{ background: alerta.estado === 'PENDIENTE' ? 'rgba(239,68,68,0.02)' : 'transparent' }}>
-                          <td style={{ fontWeight: 600 }}>{alerta.tramites ? `${alerta.tramites.codigo_interno || 'SIN-CODIGO'} - ${alerta.tramites.titulo}` : 'Trámite Eliminado'}</td>
+                          <td style={{ fontWeight: 600 }}>{alerta.tramite_titulo ? `[${alerta.tramite_codigo || 'S/C'}] - ${alerta.tramite_titulo}` : 'Trámite Eliminado'}</td>
                           <td><span className="badge" style={{ background: 'var(--accent-light)', color: 'var(--primary)' }}>{alerta.motivo}</span></td>
                           <td>{alerta.descripcion}</td>
                           <td>{new Date(alerta.creado_en).toLocaleDateString()}</td>
