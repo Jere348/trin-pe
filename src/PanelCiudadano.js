@@ -465,6 +465,7 @@ const PanelCiudadano = () => {
                 </form>
               </div>
             </div>
+          )}
           {vistaActual === 'configuracion' && (
             <div className="configuracion-wrapper animate-in">
               <div className="section-title">
