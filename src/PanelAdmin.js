@@ -1,142 +1,125 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiFetch, clearSession, getUser } from './api';
+import { useToast } from './Toast';
 import { supabase } from './supabase';
+import { LayoutDashboard, FileText, Building2, Bell, LogOut, Shield, Download, RefreshCw, Search, Trash2, Edit2, CheckCircle, Plus, ArrowLeft, Star } from 'lucide-react';
 import './PanelAdmin.css';
 
 const PanelAdmin = () => {
   const navigate = useNavigate();
-  const [pestañaActiva, setPestañaActiva] = useState('catalogo');
+  const { showToast } = useToast();
+  const usuarioActual = getUser();
   
+  const [pestañaActiva, setPestañaActiva] = useState('catalogo');
   const [vistaCatalogo, setVistaCatalogo] = useState('lista'); 
   const [listaTramites, setListaTramites] = useState([]);
   const [editandoId, setEditandoId] = useState(null); 
-  const [busquedaAdmin, setBusquedaAdmin] = useState('');
   const [topBusquedas, setTopBusquedas] = useState([]);
 
-  // ==========================================
-  // ESTADOS PARA LAS ENTIDADES
-  // ==========================================
   const [listaEntidades, setListaEntidades] = useState([]);
   const [nuevaSigla, setNuevaSigla] = useState('');
   const [nuevoNombreEntidad, setNuevoNombreEntidad] = useState('');
   const [nuevoLogoUrl, setNuevoLogoUrl] = useState('');
-  const [editandoEntidadId, setEditandoEntidadId] = useState(null); // NUEVO ESTADO PARA EDITAR
+  const [editandoEntidadId, setEditandoEntidadId] = useState(null);
 
-  // ==========================================
-  // ESTADOS DEL FORMULARIO DE TRÁMITES
-  // ==========================================
   const [titulo, setTitulo] = useState('');
   const [codigoInterno, setCodigoInterno] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [entidad, setEntidad] = useState('');
-  const [modalidad, setModalidad] = useState('virtual');
+  const [modalidad, setModalidad] = useState('Virtual');
   const [costo, setCosto] = useState('');
   const [requisitos, setRequisitos] = useState('');
   const [pasos, setPasos] = useState([{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
 
-  // ==========================================
-  // ESTADOS PARA ALERTAS
-  // ==========================================
   const [listaAlertas, setListaAlertas] = useState([]);
 
-  // ==========================================
-  // CARGA DE DATOS INICIALES
-  // ==========================================
   const cargarTramitesAdmin = async () => {
     try {
-      const respuesta = await fetch('https://trin-pe-backend.onrender.com/api/tramites');
+      const respuesta = await apiFetch('/api/tramites');
       if (respuesta.ok) setListaTramites(await respuesta.json());
     } catch (error) { console.error("Error al cargar lista:", error); }
   };
 
   const cargarMetricas = async () => {
     try {
-      const respuesta = await fetch('https://trin-pe-backend.onrender.com/api/metricas/top');
+      const respuesta = await apiFetch('/api/metricas/top');
       if (respuesta.ok) setTopBusquedas(await respuesta.json());
     } catch (error) { console.error("Error al cargar métricas", error); }
   };
 
   const cargarEntidades = async () => {
     try {
-      const respuesta = await fetch('https://trin-pe-backend.onrender.com/api/entidades');
+      const respuesta = await apiFetch('/api/entidades');
       if (respuesta.ok) setListaEntidades(await respuesta.json());
     } catch (error) { console.error("Error al cargar entidades", error); }
   };
 
   const cargarAlertas = async () => {
     try {
-      const respuesta = await fetch('https://trin-pe-backend.onrender.com/api/alertas');
+      const respuesta = await apiFetch('/api/alertas');
       if (respuesta.ok) setListaAlertas(await respuesta.json());
     } catch (error) { console.error("Error al cargar alertas", error); }
   };
 
   useEffect(() => {
+    if (!usuarioActual || !['Admin', 'Administrador'].includes(usuarioActual.rol)) {
+      clearSession();
+      navigate('/login');
+      return;
+    }
     cargarTramitesAdmin();
     cargarMetricas();
     cargarEntidades();
     cargarAlertas();
-  }, []);
+  }, [navigate, usuarioActual]);
 
   const obtenerListaSegura = (datos) => {
     if (!datos) return [];
     return typeof datos === 'string' ? JSON.parse(datos) : datos;
   };
 
-  const tramitesFiltrados = listaTramites.filter((tramite) => {
-    const busquedaMinuscula = busquedaAdmin.toLowerCase();
-    return tramite.titulo.toLowerCase().includes(busquedaMinuscula) || tramite.entidad.toLowerCase().includes(busquedaMinuscula);
-  });
-
-  // ==========================================
-  // LÓGICA DE ENTIDADES (CRUD COMPLETADO)
-  // ==========================================
   const guardarEntidad = async (e) => {
     e.preventDefault();
-    const url = editandoEntidadId 
-      ? `https://trin-pe-backend.onrender.com/api/entidades/${editandoEntidadId}` 
-      : 'https://trin-pe-backend.onrender.com/api/entidades';
+    const url = editandoEntidadId ? `/api/entidades/${editandoEntidadId}` : '/api/entidades';
     const metodo = editandoEntidadId ? 'PUT' : 'POST';
 
     try {
-      const respuesta = await fetch(url, {
+      const respuesta = await apiFetch(url, {
         method: metodo,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sigla: nuevaSigla, nombre_completo: nuevoNombreEntidad, logo_url: nuevoLogoUrl })
       });
       if (respuesta.ok) {
-        alert(editandoEntidadId ? '🏢 Entidad actualizada con éxito' : '🏢 Entidad agregada con éxito');
-        cancelarEdicionEntidad();
+        showToast(editandoEntidadId ? 'Entidad actualizada.' : 'Entidad creada.', 'success');
+        setEditandoEntidadId(null); setNuevaSigla(''); setNuevoNombreEntidad(''); setNuevoLogoUrl('');
         cargarEntidades();
+      } else {
+        showToast('No se pudo guardar la entidad.', 'error');
       }
-    } catch (error) { alert('Error de conexión al guardar entidad'); }
+    } catch (error) { showToast('Error de conexión al guardar entidad.', 'error'); }
   };
 
-  const iniciarEdicionEntidad = (ent) => {
+  const abrirEdicionEntidad = (ent) => {
     setEditandoEntidadId(ent.id);
     setNuevaSigla(ent.sigla);
     setNuevoNombreEntidad(ent.nombre_completo);
     setNuevoLogoUrl(ent.logo_url || '');
   };
 
-  const cancelarEdicionEntidad = () => {
-    setEditandoEntidadId(null);
-    setNuevaSigla('');
-    setNuevoNombreEntidad('');
-    setNuevoLogoUrl('');
-  };
-
   const eliminarEntidad = async (id) => {
     const confirmar = window.confirm('⚠️ ¿Seguro que deseas eliminar esta entidad? No afectará a los trámites que ya la usan.');
     if (!confirmar) return;
     try {
-      const respuesta = await fetch(`https://trin-pe-backend.onrender.com/api/entidades/${id}`, { method: 'DELETE' });
-      if (respuesta.ok) cargarEntidades();
-    } catch (error) { alert('Error al eliminar entidad'); }
+      const respuesta = await apiFetch(`/api/entidades/${id}`, { method: 'DELETE' });
+      if (respuesta.ok) {
+        showToast('Entidad eliminada.', 'success');
+        cargarEntidades();
+      } else {
+        showToast('No se pudo eliminar la entidad.', 'error');
+      }
+    } catch (error) { showToast('Error al eliminar entidad.', 'error'); }
   };
 
-  // ==========================================
-  // FUNCIONES DE EDICIÓN Y ELIMINACIÓN DE TRÁMITES
-  // ==========================================
   const limpiarFormulario = () => {
     setEditandoId(null); setTitulo(''); setCodigoInterno(''); setDescripcion(''); setEntidad(''); 
     setCosto(''); setRequisitos(''); 
@@ -147,24 +130,28 @@ const PanelAdmin = () => {
 
   const abrirParaEditar = (tramite) => {
     setEditandoId(tramite.id); setTitulo(tramite.titulo); setCodigoInterno(tramite.codigo_interno || '');
-    setDescripcion(tramite.descripcion); setEntidad(tramite.entidad); setModalidad(tramite.modalidad); setCosto(tramite.costo);
-    const listaReq = obtenerListaSegura(tramite.requisitos); setRequisitos(listaReq.join('\n'));
-    const listaPasos = obtenerListaSegura(tramite.pasos); setPasos(listaPasos.length > 0 ? listaPasos : [{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
+    setDescripcion(tramite.descripcion); setEntidad(tramite.entidad); setModalidad(tramite.modalidad || 'Virtual'); setCosto(tramite.costo);
+    const listaReq = obtenerListaSegura(tramite.requisitos); 
+    setRequisitos(listaReq.map(r => r.descripcion || r).join('\n'));
+    const listaPasos = obtenerListaSegura(tramite.pasos); 
+    setPasos(listaPasos.length > 0 ? listaPasos : [{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
     setVistaCatalogo('formulario');
   };
 
   const eliminarTramite = async (id) => {
-    const confirmar = window.confirm('⚠️ ¿Estás seguro de que deseas eliminar este trámite de forma permanente?');
+    const confirmar = window.confirm('⚠️ ¿Estás seguro de que deseas eliminar este trámite permanentemente?');
     if (!confirmar) return;
     try {
-      const respuesta = await fetch(`https://trin-pe-backend.onrender.com/api/tramites/${id}`, { method: 'DELETE' });
-      if (respuesta.ok) { alert('🗑️ Trámite eliminado correctamente'); cargarTramitesAdmin(); }
-    } catch (error) { alert('Error al eliminar el trámite'); }
+      const respuesta = await apiFetch(`/api/tramites/${id}`, { method: 'DELETE' });
+      if (respuesta.ok) {
+        showToast('Trámite eliminado correctamente.', 'success');
+        cargarTramitesAdmin();
+      } else {
+        showToast('No se pudo eliminar el trámite.', 'error');
+      }
+    } catch (error) { showToast('Error al eliminar el trámite.', 'error'); }
   };
 
-  // ==========================================
-  // LÓGICA DE PASOS Y SUBIDA DE ARCHIVOS
-  // ==========================================
   const agregarPaso = () => setPasos([...pasos, { id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
   const eliminarPaso = (id) => { if (pasos.length > 1) setPasos(pasos.filter((paso) => paso.id !== id)); };
   
@@ -182,30 +169,36 @@ const PanelAdmin = () => {
       if (error) throw error;
       const { data: publicURLData } = supabase.storage.from('formatos-tramites').getPublicUrl(nombreUnico);
       actualizarPaso(idDelPaso, 'archivoUrl', publicURLData.publicUrl);
-      alert('✅ Archivo subido con éxito a la nube');
-    } catch (error) { alert(`❌ Error de Supabase: ${error.message}`); } 
-    finally { actualizarPaso(idDelPaso, 'subiendo', false); }
+      showToast('Archivo subido con éxito a la nube.', 'success');
+    } catch (error) { 
+      showToast(`Error de Supabase: ${error.message}`, 'error'); 
+    } finally { 
+      actualizarPaso(idDelPaso, 'subiendo', false); 
+    }
   };
 
   const guardarTramite = async (e) => {
     e.preventDefault();
     const arrayRequisitos = requisitos.split('\n').filter(req => req.trim() !== '');
     const paqueteDeDatos = { titulo, codigo_interno: codigoInterno, descripcion, entidad, modalidad, costo: parseFloat(costo) || 0, requisitos: arrayRequisitos, pasos };
-    const url = editandoId ? `https://trin-pe-backend.onrender.com/api/tramites/${editandoId}` : 'https://trin-pe-backend.onrender.com/api/tramites';
+    const url = editandoId ? `/api/tramites/${editandoId}` : '/api/tramites';
     const metodo = editandoId ? 'PUT' : 'POST';
     try {
-      const respuesta = await fetch(url, { method: metodo, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(paqueteDeDatos) });
+      const respuesta = await apiFetch(url, { method: metodo, body: JSON.stringify(paqueteDeDatos) });
       if (respuesta.ok) {
-        alert(editandoId ? '✏️ ¡Trámite actualizado!' : '✅ ¡Guía publicada con éxito!');
+        showToast(editandoId ? 'Trámite actualizado.' : 'Guía publicada con éxito.', 'success');
         cargarTramitesAdmin(); setVistaCatalogo('lista'); 
-      } else { const errorData = await respuesta.json(); alert('❌ Error al guardar: ' + errorData.error); }
-    } catch (error) { alert('⚠️ Error de conexión.'); }
+      } else { 
+        const errorData = await respuesta.json(); 
+        showToast('Error al guardar: ' + errorData.error, 'error'); 
+      }
+    } catch (error) { showToast('Error de conexión.', 'error'); }
   };
 
   const exportarCSV = () => {
-    if (listaTramites.length === 0) { alert("No hay trámites en el catálogo para exportar."); return; }
+    if (listaTramites.length === 0) { showToast('No hay trámites para exportar.', 'warning'); return; }
     const cabeceras = ["ID", "Código", "Título", "Entidad", "Modalidad", "Costo (S/)"];
-    const filas = listaTramites.map(t => [t.id, t.codigo_interno || 'N/A', `"${t.titulo}"`, `"${t.entidad}"`, t.modalidad, t.costo]);
+    const filas = listaTramites.map(t => [t.id, t.codigo_interno || 'N/A', `"${t.titulo}"`, `"${t.entidad}"`, t.modalidad || 'Virtual', t.costo]);
     const contenidoCSV = [cabeceras.join(","), ...filas.map(f => f.join(","))].join("\n");
     const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -215,87 +208,113 @@ const PanelAdmin = () => {
     document.body.appendChild(enlace); enlace.click(); document.body.removeChild(enlace);
   };
 
-  // ==========================================
-  // LÓGICA DE RESOLUCIÓN DE ALERTAS
-  // ==========================================
   const resolverAlerta = async (id) => {
     try {
-      const respuesta = await fetch(`https://trin-pe-backend.onrender.com/api/alertas/${id}/resolver`, { method: 'PUT' });
-      if (respuesta.ok) cargarAlertas(); 
-    } catch (error) { alert('Error al procesar alerta'); }
+      const respuesta = await apiFetch(`/api/alertas/${id}/resolver`, { method: 'PUT' });
+      if (respuesta.ok) {
+        showToast('Alerta resuelta.', 'success');
+        cargarAlertas();
+      } else {
+        showToast('Error al resolver la alerta.', 'error');
+      }
+    } catch (error) { showToast('Error al procesar alerta.', 'error'); }
   };
 
   const alertasPendientes = listaAlertas.filter(a => a.estado === 'PENDIENTE').length;
 
+  if (!usuarioActual || !['Admin', 'Administrador'].includes(usuarioActual.rol)) {
+    return null;
+  }
+
   return (
-    <div className="admin-layout">
-      <aside className="admin-sidebar">
-        <div className="sidebar-logo"><h2>Trámite Inteligente</h2></div>
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${pestañaActiva === 'metricas' ? 'active' : ''}`} onClick={() => setPestañaActiva('metricas')}>📊 Dashboard de Métricas</button>
-          <button className={`nav-item ${pestañaActiva === 'catalogo' ? 'active' : ''}`} onClick={() => setPestañaActiva('catalogo')}>📝 Gestión de Catálogo</button>
-          <button className={`nav-item ${pestañaActiva === 'entidades' ? 'active' : ''}`} onClick={() => setPestañaActiva('entidades')}>🏢 Gestión de Entidades</button>
-          <button className={`nav-item ${pestañaActiva === 'alertas' ? 'active' : ''}`} onClick={() => { setPestañaActiva('alertas'); cargarAlertas(); }}>
-            🔔 Alertas y Reportes {alertasPendientes > 0 && <span style={{ background: '#ef4444', color: 'white', padding: '2px 8px', borderRadius: '10px', fontSize: '12px', marginLeft: '5px' }}>{alertasPendientes}</span>}
+    <div className="admin-page">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="shield-icon"><Shield size={32} /></div>
+          <h2>Trámite Inteligente</h2>
+          <span>Panel Interno</span>
+        </div>
+        <nav className="sidebar-menu">
+          <button className={`menu-item ${pestañaActiva === 'metricas' ? 'active' : ''}`} onClick={() => setPestañaActiva('metricas')}>
+            <LayoutDashboard size={20} /> Dashboard de Métricas
+          </button>
+          <button className={`menu-item ${pestañaActiva === 'catalogo' ? 'active' : ''}`} onClick={() => setPestañaActiva('catalogo')}>
+            <FileText size={20} /> Gestión de Catálogo
+          </button>
+          <button className={`menu-item ${pestañaActiva === 'entidades' ? 'active' : ''}`} onClick={() => setPestañaActiva('entidades')}>
+            <Building2 size={20} /> Gestión de Entidades
+          </button>
+          <button className={`menu-item ${pestañaActiva === 'alertas' ? 'active' : ''}`} onClick={() => { setPestañaActiva('alertas'); cargarAlertas(); }}>
+            <Bell size={20} /> Alertas y Reportes {alertasPendientes > 0 && <span style={{ background: 'var(--error)', color: 'white', padding: '2px 8px', borderRadius: '10px', fontSize: '12px', marginLeft: 'auto' }}>{alertasPendientes}</span>}
           </button>
         </nav>
-        <div className="sidebar-footer"><button className="btn-logout" onClick={() => navigate('/')}>🚪 Salir</button></div>
+        <div className="sidebar-footer">
+          <button className="menu-item logout" onClick={() => { clearSession(); showToast('Sesión cerrada.', 'success'); navigate('/'); }}>
+            <LogOut size={20} /> Cerrar Sesión
+          </button>
+        </div>
       </aside>
 
-      <main className="admin-main">
-        <header className="admin-header">
-          <h1 className="header-title">Panel de Gestión Interna</h1>
-          <div className="admin-avatar">A</div>
+      <main className="main-content">
+        <header className="admin-header-row">
+          <h1>Gestión Interna</h1>
+          <div className="admin-avatar-btn">
+            {usuarioActual?.nombre?.charAt(0).toUpperCase() || 'A'}
+          </div>
         </header>
 
         <div className="admin-content">
-          
-          {/* ========================================== */}
-          {/* PESTAÑA 1: DASHBOARD DE MÉTRICAS           */}
-          {/* ========================================== */}
           {pestañaActiva === 'metricas' && (
-            <div className="admin-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 className="section-title" style={{ color: '#1e3a8a', margin: 0 }}>Métricas de Búsqueda</h2>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button className="btn-edit" onClick={cargarMetricas}>🔄 Actualizar</button>
+            <div>
+              <div className="panel-header-row">
+                <h2 className="panel-title"><LayoutDashboard size={24}/> Métricas de Búsqueda</h2>
+                <button className="btn-secondary" onClick={cargarMetricas}><RefreshCw size={16}/> Actualizar</button>
+              </div>
+
+              <div className="metrics-grid">
+                <div className="metric-card-modern">
+                  <div className="metric-icon-wrapper blue">
+                    <Search size={28} />
+                  </div>
+                  <div className="metric-info">
+                    <h3>Búsquedas Totales (Top)</h3>
+                    <div className="metric-value">
+                      {topBusquedas.reduce((suma, item) => suma + Number(item.cantidad), 0).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+                <div className="metric-card-modern">
+                  <div className="metric-icon-wrapper purple">
+                    <Star size={28} />
+                  </div>
+                  <div className="metric-info">
+                    <h3>Trámite más consultado</h3>
+                    <div className="metric-value" style={{ fontSize: 20 }}>
+                      {topBusquedas.length > 0 ? topBusquedas[0].termino.toUpperCase() : '---'}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="metrics-cards-container">
-                <div className="metric-card">
-                  <div className="metric-value">
-                    {topBusquedas.reduce((suma, item) => suma + Number(item.cantidad), 0).toLocaleString()}
-                  </div>
-                  <div className="metric-label">Búsquedas Totales (Top)</div>
-                </div>
-                <div className="metric-card">
-                  <div className="metric-value">
-                    {topBusquedas.length > 0 ? topBusquedas[0].termino.toUpperCase() : '---'}
-                  </div>
-                  <div className="metric-label">Trámite más consultado</div>
-                </div>
-              </div>
-
-              <div className="admin-card" style={{ marginTop: '20px' }}>
-                <h3 style={{ marginTop: 0 }}>🏆 Top 10: Términos detallados</h3>
+              <div className="admin-panel-card">
+                <h3 className="panel-title" style={{ marginBottom: 20 }}>Top 10 Búsquedas</h3>
                 {topBusquedas.length === 0 ? (
-                  <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>Aún no hay datos suficientes de búsqueda.</p>
+                  <p style={{ color: 'var(--text-light)' }}>Aún no hay datos suficientes.</p>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {topBusquedas.map((item, index) => {
                       const maxCantidad = topBusquedas[0].cantidad;
                       const porcentaje = (item.cantidad / maxCantidad) * 100;
                       return (
                         <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                          <span style={{ width: '25px', fontWeight: 'bold', color: '#64748b' }}>#{index + 1}</span>
+                          <span style={{ width: '25px', fontWeight: 'bold', color: 'var(--text-light)' }}>#{index + 1}</span>
                           <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                              <span style={{ fontWeight: '600', textTransform: 'capitalize', color: '#1e293b' }}>"{item.termino}"</span>
-                              <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold' }}>{item.cantidad}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <span style={{ fontWeight: '600', textTransform: 'capitalize' }}>"{item.termino}"</span>
+                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{item.cantidad} consultas</span>
                             </div>
-                            <div style={{ width: '100%', backgroundColor: '#f1f5f9', borderRadius: '4px', height: '10px', overflow: 'hidden' }}>
-                              <div style={{ width: `${porcentaje}%`, backgroundColor: '#1e3a8a', height: '100%', borderRadius: '4px', transition: 'width 1s ease-out' }}></div>
+                            <div className="progress-bar-wrapper">
+                              <div className="progress-bar-fill" style={{ width: `${porcentaje}%` }}></div>
                             </div>
                           </div>
                         </div>
@@ -305,274 +324,244 @@ const PanelAdmin = () => {
                 )}
               </div>
 
-              <hr className="form-divider" style={{ margin: '30px 0' }} />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div><h2 className="section-title" style={{ color: '#1e3a8a', margin: 0 }}>Exportar Catálogo</h2></div>
-              </div>
-              <div style={{ marginTop: '15px' }}>
-                <button className="btn-export-green" onClick={exportarCSV}>⬇️ Exportar Reporte a CSV</button>
+              <div className="admin-panel-card">
+                <div className="panel-header-row" style={{ marginBottom: 0 }}>
+                  <h3 className="panel-title">Exportar Catálogo de Trámites</h3>
+                  <button className="btn-primary" style={{ background: 'var(--success)' }} onClick={exportarCSV}>
+                    <Download size={18}/> Exportar a CSV
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
-          {/* ========================================== */}
-          {/* PESTAÑA 2: GESTIÓN DE CATÁLOGO             */}
-          {/* ========================================== */}
-          {pestañaActiva === 'catalogo' && (
-            <div className="admin-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 className="section-title">Gestión de Catálogo</h2>
-                {vistaCatalogo === 'lista' && (
-                  <button className="btn-primary-admin" onClick={abrirParaCrear}>+ Crear Nuevo Trámite</button>
-                )}
-              </div>
-
-              {vistaCatalogo === 'lista' ? (
-                <>
-                  <div className="admin-search-container">
-                    <input 
-                      type="text" className="admin-search-input" placeholder="🔍 Buscar trámite por título o entidad..." 
-                      value={busquedaAdmin} onChange={(e) => setBusquedaAdmin(e.target.value)}
-                    />
-                  </div>
-                  <div className="tramites-list-grid">
-                    {tramitesFiltrados.length === 0 ? (
-                      <p style={{color: '#64748b', textAlign: 'center', padding: '20px'}}>No se encontraron trámites.</p>
-                    ) : (
-                      tramitesFiltrados.map((tramite) => (
-                        <div key={tramite.id} className="admin-tramite-card">
-                          <div>
-                            <span className="card-entity">{tramite.entidad}</span>
-                            <h4 style={{margin: '10px 0', fontSize: '18px', color: '#1e293b'}}>{tramite.titulo}</h4>
-                            <span style={{fontSize: '13px', color: '#64748b', fontWeight: 'bold'}}>ID: {tramite.id} | Costo: S/ {tramite.costo}</span>
-                          </div>
-                          <div className="card-actions">
-                            <button className="btn-edit" onClick={() => abrirParaEditar(tramite)}>✏️ Editar</button>
-                            <button className="btn-delete" onClick={() => eliminarTramite(tramite.id)}>🗑️</button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </>
-              ) : (
-              <div className="admin-card form-card">
-                <button type="button" style={{background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', marginBottom: '15px', fontWeight: 'bold'}} onClick={() => setVistaCatalogo('lista')}>
-                  ← Volver a la lista
+          {pestañaActiva === 'catalogo' && vistaCatalogo === 'lista' && (
+            <div className="admin-panel-card">
+              <div className="panel-header-row">
+                <h2 className="panel-title"><FileText size={24}/> Directorio de Trámites</h2>
+                <button className="btn-primary" onClick={abrirParaCrear}>
+                  <Plus size={18}/> Nuevo trámite
                 </button>
-                <h3>{editandoId ? '✏️ Editando Guía de Trámite' : '✨ Crear Nueva Guía de Trámite'}</h3>
-                
-                <form className="admin-form" onSubmit={guardarTramite}>
-                  <h4 className="form-subtitle">1. Datos Generales</h4>
-                  <div className="input-row">
-                    <div className="input-group" style={{ flex: 2 }}>
-                      <label>Título</label>
-                      <input type="text" required value={titulo} onChange={(e) => setTitulo(e.target.value)} />
-                    </div>
-                    <div className="input-group">
-                      <label>Código Interno</label>
-                      <input type="text" value={codigoInterno} onChange={(e) => setCodigoInterno(e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="input-group">
-                    <label>Descripción</label>
-                    <textarea rows="3" required className="admin-textarea" value={descripcion} onChange={(e) => setDescripcion(e.target.value)}></textarea>
-                  </div>
-                  <div className="input-row">
-                    <div className="input-group">
-                      <label>Entidad Responsable</label>
-                      <select required value={entidad} onChange={(e) => setEntidad(e.target.value)}>
-                        <option value="">Selecciona una entidad...</option>
-                        {listaEntidades.map((ent) => (
-                          <option key={ent.id} value={ent.sigla}>{ent.sigla} - {ent.nombre_completo}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="input-group">
-                      <label>Modalidad</label>
-                      <select value={modalidad} onChange={(e) => setModalidad(e.target.value)}>
-                        <option value="virtual">💻 Virtual</option>
-                        <option value="presencial">🏢 Presencial</option>
-                        <option value="mixto">🔄 Mixto</option>
-                      </select>
-                    </div>
-                    <div className="input-group">
-                      <label>Costo Oficial (S/)</label>
-                      <input type="number" step="0.10" value={costo} onChange={(e) => setCosto(e.target.value)} />
-                    </div>
-                  </div>
-
-                  <hr className="form-divider" />
-                  <h4 className="form-subtitle">2. Requisitos Previos</h4>
-                  <div className="input-group">
-                    <textarea rows="4" placeholder="Escribe un requisito por línea" className="admin-textarea" value={requisitos} onChange={(e) => setRequisitos(e.target.value)}></textarea>
-                  </div>
-
-                  <hr className="form-divider" />
-                  <h4 className="form-subtitle">3. Guía Paso a Paso</h4>
-                  {pasos.map((paso, index) => (
-                    <div key={paso.id} className="step-builder-card">
-                      <div className="step-header">
-                        <span className="step-badge">Paso {index + 1}</span>
-                        {pasos.length > 1 && <button type="button" className="btn-remove-step" onClick={() => eliminarPaso(paso.id)}>🗑️ Eliminar paso</button>}
-                      </div>
-                      <div className="input-group">
-                        <label>Título del Paso</label>
-                        <input type="text" required value={paso.titulo} onChange={(e) => actualizarPaso(paso.id, 'titulo', e.target.value)} />
-                      </div>
-                      <div className="input-group">
-                        <label>Instrucciones</label>
-                        <textarea rows="2" required className="admin-textarea" value={paso.instrucciones} onChange={(e) => actualizarPaso(paso.id, 'instrucciones', e.target.value)}></textarea>
-                      </div>
-                      <div className="input-group" style={{ backgroundColor: '#f1f5f9', padding: '15px', borderRadius: '6px', marginTop: '10px' }}>
-                        <label>📄 Adjuntar formato para este paso (PDF)</label>
-                        <input type="file" accept=".pdf" className="file-input" onChange={(e) => subirPDF(e, paso.id)} disabled={paso.subiendo} />
-                        {paso.subiendo && <span style={{ color: '#2563eb', fontSize: '14px', marginTop: '5px' }}>⏳ Subiendo archivo a la nube...</span>}
-                        {paso.archivoUrl && <span style={{ color: '#10b981', fontSize: '14px', marginTop: '5px', fontWeight: 'bold', display: 'block' }}>✅ Archivo cargado en la base de datos</span>}
-                      </div>
-                    </div>
-                  ))}
-
-                  <button type="button" className="btn-add-step" onClick={agregarPaso}>+ Agregar siguiente paso</button>
-                  <hr className="form-divider" />
-                  <button type="submit" className="btn-primary-admin btn-large">
-                    {editandoId ? '💾 Guardar Cambios' : '💾 Publicar Guía en el Buscador'}
-                  </button>
-                </form>
               </div>
+              
+              <div className="modern-table-wrapper">
+                <table className="modern-table">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Título</th>
+                      <th>Entidad</th>
+                      <th>Costo</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listaTramites.map(t => (
+                      <tr key={t.id}>
+                        <td style={{ color: 'var(--text-light)', fontWeight: 600 }}>{t.codigo_interno || '-'}</td>
+                        <td style={{ fontWeight: 600 }}>{t.titulo}</td>
+                        <td>{t.entidad}</td>
+                        <td>S/ {t.costo}</td>
+                        <td>
+                          <div className="action-group">
+                            <button className="btn-icon-action edit" onClick={() => abrirParaEditar(t)} title="Editar"><Edit2 size={16}/></button>
+                            <button className="btn-icon-action delete" onClick={() => eliminarTramite(t.id)} title="Eliminar"><Trash2 size={16}/></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {pestañaActiva === 'catalogo' && vistaCatalogo === 'formulario' && (
+            <div className="admin-panel-card">
+              <div className="panel-header-row">
+                <h2 className="panel-title">{editandoId ? 'Editar Trámite' : 'Crear Nuevo Trámite'}</h2>
+                <button className="btn-secondary" onClick={() => setVistaCatalogo('lista')}>
+                  <ArrowLeft size={16} /> Volver
+                </button>
+              </div>
+
+              <form onSubmit={guardarTramite}>
+                <div className="form-grid">
+                  <div className="form-group full-width">
+                    <label>Título del Trámite</label>
+                    <input className="form-input" required value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label>Código Interno</label>
+                    <input className="form-input" value={codigoInterno} onChange={(e) => setCodigoInterno(e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label>Entidad Responsable</label>
+                    <select className="form-input" required value={entidad} onChange={(e) => setEntidad(e.target.value)}>
+                      <option value="">Selecciona una entidad...</option>
+                      {listaEntidades.map(ent => (
+                        <option key={ent.id} value={ent.sigla}>{ent.nombre_completo}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Costo Oficial (S/)</label>
+                    <input className="form-input" type="number" step="0.1" required value={costo} onChange={(e) => setCosto(e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label>Modalidad</label>
+                    <select className="form-input" value={modalidad} onChange={(e) => setModalidad(e.target.value)}>
+                      <option value="Presencial">Presencial</option>
+                      <option value="Virtual">Virtual</option>
+                      <option value="Mixto">Mixto</option>
+                    </select>
+                  </div>
+                  <div className="form-group full-width">
+                    <label>Descripción General</label>
+                    <textarea className="form-input" rows="3" required value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+                  </div>
+                  <div className="form-group full-width">
+                    <label>Requisitos (Uno por línea)</label>
+                    <textarea className="form-input" rows="4" required value={requisitos} onChange={(e) => setRequisitos(e.target.value)} placeholder="DNI original&#10;Recibo de luz..." />
+                  </div>
+                </div>
+
+                <div className="panel-header-row" style={{ marginTop: 32 }}>
+                  <h3 className="panel-title" style={{ fontSize: 18 }}>Pasos del Trámite</h3>
+                  <button type="button" className="btn-secondary" onClick={agregarPaso}>+ Añadir paso</button>
+                </div>
+
+                {pasos.map((paso, index) => (
+                  <div key={paso.id} className="paso-builder-card">
+                    <button type="button" className="btn-icon-action delete btn-remove-paso" onClick={() => eliminarPaso(paso.id)}><Trash2 size={16}/></button>
+                    <div className="form-group">
+                      <label>Paso {index + 1}: Título</label>
+                      <input className="form-input" required value={paso.titulo} onChange={(e) => actualizarPaso(paso.id, 'titulo', e.target.value)} />
+                    </div>
+                    <div className="form-group" style={{ marginTop: 16 }}>
+                      <label>Instrucciones detalladas</label>
+                      <textarea className="form-input" rows="2" required value={paso.instrucciones} onChange={(e) => actualizarPaso(paso.id, 'instrucciones', e.target.value)} />
+                    </div>
+                    <div className="form-group" style={{ marginTop: 16 }}>
+                      <label>Formato/Anexo (PDF)</label>
+                      <input type="file" accept=".pdf" className="form-input" onChange={(e) => subirPDF(e, paso.id)} disabled={paso.subiendo} />
+                      {paso.subiendo && <small style={{ color: 'var(--accent)', marginTop: 4, display: 'block' }}>Subiendo a la nube...</small>}
+                      {paso.archivoUrl && <a href={paso.archivoUrl} target="_blank" rel="noreferrer" style={{ display: 'block', marginTop: 8, fontSize: 13, color: 'var(--success)' }}>Formato adjunto (Ver)</a>}
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 32, display: 'flex', justifyContent: 'flex-end' }}>
+                  <button type="submit" className="btn-primary">
+                    <CheckCircle size={18}/> Guardar e Implementar
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {pestañaActiva === 'entidades' && (
+            <div className="admin-panel-card">
+              <h2 className="panel-title"><Building2 size={24}/> Gestión de Entidades Públicas</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: 24, marginTop: 8 }}>Registra los ministerios, organismos y municipalidades que administran trámites.</p>
+              
+              <form onSubmit={guardarEntidad} className="form-grid" style={{ background: 'var(--background)', padding: 24, borderRadius: 16, marginBottom: 32 }}>
+                <div className="form-group">
+                  <label>Nombre Completo</label>
+                  <input className="form-input" required value={nuevoNombreEntidad} onChange={(e) => setNuevoNombreEntidad(e.target.value)} placeholder="Ej. Registro Nacional de Identificación" />
+                </div>
+                <div className="form-group">
+                  <label>Sigla o Abreviatura</label>
+                  <input className="form-input" required value={nuevaSigla} onChange={(e) => setNuevaSigla(e.target.value)} placeholder="Ej. RENIEC" />
+                </div>
+                <div className="form-group full-width">
+                  <label>URL del Logo Institucional</label>
+                  <input className="form-input" required value={nuevoLogoUrl} onChange={(e) => setNuevoLogoUrl(e.target.value)} placeholder="https://..." />
+                </div>
+                <div className="form-group full-width" style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                  {editandoEntidadId && <button type="button" className="btn-secondary" onClick={() => { setEditandoEntidadId(null); setNuevaSigla(''); setNuevoNombreEntidad(''); setNuevoLogoUrl(''); }}>Cancelar</button>}
+                  <button type="submit" className="btn-primary">
+                    <CheckCircle size={18}/> {editandoEntidadId ? 'Actualizar Entidad' : 'Registrar Entidad'}
+                  </button>
+                </div>
+              </form>
+              
+              <div className="modern-table-wrapper">
+                <table className="modern-table">
+                  <thead>
+                    <tr>
+                      <th>Logo</th>
+                      <th>Sigla</th>
+                      <th>Nombre Completo</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listaEntidades.map(ent => (
+                      <tr key={ent.id}>
+                        <td><img src={ent.logo_url} alt="Logo" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'contain', background: 'var(--white)' }} /></td>
+                        <td style={{ fontWeight: 600 }}>{ent.sigla}</td>
+                        <td>{ent.nombre_completo}</td>
+                        <td>
+                          <div className="action-group">
+                            <button className="btn-icon-action edit" onClick={() => abrirEdicionEntidad(ent)} title="Editar"><Edit2 size={16}/></button>
+                            <button className="btn-icon-action delete" onClick={() => eliminarEntidad(ent.id)} title="Eliminar"><Trash2 size={16}/></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {pestañaActiva === 'alertas' && (
+            <div className="admin-panel-card">
+              <h2 className="panel-title"><Bell size={24}/> Alertas y Reportes Ciudadanos</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: 24, marginTop: 8 }}>Revisa los reportes de información desactualizada enviados por los usuarios.</p>
+
+              {listaAlertas.length === 0 ? (
+                <p>No hay alertas registradas en el sistema.</p>
+              ) : (
+                <div className="modern-table-wrapper">
+                  <table className="modern-table">
+                    <thead>
+                      <tr>
+                        <th>Trámite Afectado</th>
+                        <th>Motivo del Reporte</th>
+                        <th>Descripción</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {listaAlertas.map(alerta => (
+                        <tr key={alerta.id} style={{ background: alerta.estado === 'PENDIENTE' ? 'rgba(239,68,68,0.02)' : 'transparent' }}>
+                          <td style={{ fontWeight: 600 }}>{alerta.tramites?.titulo || 'Trámite Eliminado'}</td>
+                          <td><span className="badge" style={{ background: 'var(--accent-light)', color: 'var(--primary)' }}>{alerta.motivo}</span></td>
+                          <td>{alerta.descripcion}</td>
+                          <td>{new Date(alerta.creado_en).toLocaleDateString()}</td>
+                          <td>
+                            <span className="badge" style={{ background: alerta.estado === 'PENDIENTE' ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)', color: alerta.estado === 'PENDIENTE' ? '#F59E0B' : 'var(--success)' }}>
+                              {alerta.estado}
+                            </span>
+                          </td>
+                          <td>
+                            {alerta.estado === 'PENDIENTE' && (
+                              <button className="btn-icon-action check" onClick={() => resolverAlerta(alerta.id)} title="Marcar como resuelto">
+                                <CheckCircle size={20}/>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}
-
-          {/* ========================================== */}
-          {/* PESTAÑA 3: GESTIÓN DE ENTIDADES            */}
-          {/* ========================================== */}
-          {pestañaActiva === 'entidades' && (
-            <div className="admin-section">
-              <h2 className="section-title">Catálogo de Entidades del Estado</h2>
-              <p style={{color: '#64748b', marginBottom: '20px'}}>
-                Agrega o modifica las instituciones públicas para que estén disponibles al crear trámites.
-              </p>
-
-              <div className="admin-card form-card" style={{ marginBottom: '30px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                   <h3 style={{ marginTop: 0, marginBottom: '15px' }}>
-                     {editandoEntidadId ? '✏️ Editando Entidad' : '✨ Nueva Entidad'}
-                   </h3>
-                </div>
-                
-                <form style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }} onSubmit={guardarEntidad}>
-                  <div className="input-group" style={{ flex: 1, margin: 0, minWidth: '150px' }}>
-                    <label>Sigla (Ej: SUNEDU)</label>
-                    <input type="text" required value={nuevaSigla} onChange={(e) => setNuevaSigla(e.target.value)} />
-                  </div>
-                  <div className="input-group" style={{ flex: 2, margin: 0, minWidth: '200px' }}>
-                    <label>Nombre Completo</label>
-                    <input type="text" required value={nuevoNombreEntidad} onChange={(e) => setNuevoNombreEntidad(e.target.value)} />
-                  </div>
-                  <div className="input-group" style={{ flex: 2, margin: 0, minWidth: '200px' }}>
-                    <label>URL del Logo / Foto</label>
-                    <input type="text" value={nuevoLogoUrl} onChange={(e) => setNuevoLogoUrl(e.target.value)} placeholder="https://.../logo.png" />
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    {editandoEntidadId && (
-                      <button type="button" onClick={cancelarEdicionEntidad} style={{ padding: '12px 20px', backgroundColor: '#e2e8f0', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
-                        Cancelar
-                      </button>
-                    )}
-                    <button type="submit" className="btn-primary-admin" style={{ padding: '12px 20px', height: 'max-content' }}>
-                      {editandoEntidadId ? '💾 Guardar' : '+ Agregar'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              <div className="tramites-list-grid">
-                {listaEntidades.length === 0 ? (
-                  <p style={{color: '#64748b', textAlign: 'center'}}>No hay entidades registradas. Comienza agregando una.</p>
-                ) : (
-                  listaEntidades.map((ent) => (
-                    <div key={ent.id} className="admin-tramite-card" style={{ padding: '15px 20px', alignItems: 'center' }}>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{margin: '0', fontSize: '18px', color: '#1e293b'}}>{ent.sigla}</h4>
-                        <span style={{fontSize: '14px', color: '#64748b'}}>{ent.nombre_completo}</span>
-                      </div>
-                      <div className="card-actions" style={{ display: 'flex', gap: '10px' }}>
-                        <button className="btn-edit" onClick={() => iniciarEdicionEntidad(ent)}>✏️ Editar</button>
-                        <button className="btn-delete" onClick={() => eliminarEntidad(ent.id)}>🗑️</button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ========================================== */}
-          {/* PESTAÑA 4: ALERTAS Y REPORTES              */}
-          {/* ========================================== */}
-          {pestañaActiva === 'alertas' && (
-            <div className="admin-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 className="section-title" style={{ margin: 0 }}>Centro de Observabilidad</h2>
-                <button className="btn-edit" onClick={cargarAlertas}>🔄 Actualizar</button>
-              </div>
-              <p style={{color: '#64748b', marginBottom: '25px'}}>Monitorea en tiempo real los reportes de los ciudadanos y los fallos de la plataforma.</p>
-
-              <div className="tramites-list-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                {listaAlertas.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-                    <span style={{ fontSize: '40px' }}>✅</span>
-                    <h3 style={{ color: '#10b981', margin: '10px 0 0 0' }}>Sistema Estable</h3>
-                    <p style={{ color: '#64748b' }}>No hay reportes ni alertas en este momento.</p>
-                  </div>
-                ) : (
-                  listaAlertas.map(alerta => (
-                    <div key={alerta.id} className="admin-card" style={{ padding: '20px', borderLeft: alerta.tipo === 'ERROR_SISTEMA' ? '5px solid #ef4444' : '5px solid #f59e0b', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 'bold', color: alerta.tipo === 'ERROR_SISTEMA' ? '#b91c1c' : '#b45309', backgroundColor: alerta.tipo === 'ERROR_SISTEMA' ? '#fef2f2' : '#fffbeb', padding: '4px 10px', borderRadius: '4px' }}>
-                            {alerta.tipo === 'ERROR_SISTEMA' ? '🚨 ERROR INTERNO' : '🙋‍♂️ REPORTE DE CIUDADANO'}
-                          </span>
-                          <span style={{ fontSize: '13px', color: '#64748b' }}>
-                            {new Date(alerta.fecha).toLocaleString()}
-                          </span>
-                        </div>
-                        
-                        <h4 style={{ margin: '0 0 8px 0', color: '#1e293b', fontSize: '18px' }}>{alerta.motivo}</h4>
-                        <p style={{ margin: '0 0 15px 0', color: '#475569', fontSize: '15px', lineHeight: '1.5' }}>
-                          {alerta.descripcion || 'Sin descripción adicional proporcionada por el usuario.'}
-                        </p>
-                        
-                        {alerta.tramite_titulo && (
-                          <div style={{ fontSize: '13px', color: '#1d4ed8', backgroundColor: '#eff6ff', padding: '8px 12px', borderRadius: '6px', display: 'inline-block', border: '1px solid #bfdbfe' }}>
-                            <strong>Asociado al trámite:</strong> {alerta.tramite_titulo} (ID: {alerta.tramite_id})
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div style={{ marginLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {alerta.estado === 'PENDIENTE' ? (
-                          <button 
-                            onClick={() => resolverAlerta(alerta.id)} 
-                            style={{ backgroundColor: '#10b981', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                          >
-                            ✓ Marcar como Resuelto
-                          </button>
-                        ) : (
-                          <div style={{ padding: '10px 15px', borderRadius: '6px', backgroundColor: '#f1f5f9', color: '#10b981', fontWeight: 'bold', textAlign: 'center', border: '1px solid #e2e8f0' }}>
-                            ✓ Resuelto
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
         </div>
       </main>
     </div>

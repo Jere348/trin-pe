@@ -1,392 +1,429 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiFetch, clearSession, getSession, getUser } from './api';
+import { useToast } from './Toast';
+import { Search, Building2, Bookmark, LogOut, ArrowLeft, AlertTriangle, Star } from 'lucide-react';
 import './PanelCiudadano.css';
+import logoImg from './assets/logo.png';
+
+const FALLBACK_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Flag_of_Peru_%28state%29.svg/800px-Flag_of_Peru_%28state%29.svg.png';
+
+const parseList = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+};
 
 const PanelCiudadano = () => {
   const navigate = useNavigate();
-  const [vistaActual, setVistaActual] = useState('buscador'); 
+  const { showToast } = useToast();
+  const [vistaActual, setVistaActual] = useState('buscador');
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
   const [listaTramites, setListaTramites] = useState([]);
-  const [tramiteSeleccionado, setTramiteSeleccionado] = useState(null);
   const [listaEntidades, setListaEntidades] = useState([]);
-  
+  const [tramiteSeleccionado, setTramiteSeleccionado] = useState(null);
   const [usuario, setUsuario] = useState(null);
   const [listaFavoritos, setListaFavoritos] = useState([]);
-
-  // ==========================================
-  // NUEVO: ESTADO DE CARGA PARA EVITAR EL "FALSO INVITADO"
-  // ==========================================
   const [cargandoSesion, setCargandoSesion] = useState(true);
-
-  // ==========================================
-  // ESTADOS PARA EL MODAL DE REPORTES
-  // ==========================================
   const [mostrarModalReporte, setMostrarModalReporte] = useState(false);
-  const [motivoReporte, setMotivoReporte] = useState('Información desactualizada');
+  const [motivoReporte, setMotivoReporte] = useState('Informacion desactualizada');
   const [descripcionReporte, setDescripcionReporte] = useState('');
 
-  // ==========================================
-  // FUNCIÓN PARA REPORTAR ERRORES DEL SISTEMA (AUTOMÁTICO)
-  // ==========================================
   const reportarErrorAutomatico = async (motivoError, detalle) => {
     try {
-      await fetch('https://trin-pe-backend.onrender.com/api/alertas', {
+      await apiFetch('/api/alertas', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tipo: 'ERROR_SISTEMA',
           motivo: motivoError,
-          descripcion: detalle
-        })
+          descripcion: detalle,
+        }),
       });
-    } catch (e) { console.error("Fallo crítico al reportar error", e); }
+    } catch (error) {
+      console.error('No se pudo registrar la alerta automatica', error);
+    }
   };
-
-  useEffect(() => {
-    // 1. Cargar trámites (CON SENSOR DE ERRORES)
-    fetch('https://trin-pe-backend.onrender.com/api/tramites')
-      .then(res => {
-        if (!res.ok) throw new Error('Error en el servidor de base de datos');
-        return res.json();
-      })
-      .then(data => setListaTramites(data))
-      .catch(err => {
-        console.error("Error trámites:", err);
-        reportarErrorAutomatico('Fallo de conexión a la Base de Datos', err.message);
-      });
-
-    // 2. Cargar entidades
-    fetch('https://trin-pe-backend.onrender.com/api/entidades')
-      .then(res => res.ok ? res.json() : [])
-      .then(data => setListaEntidades(data))
-      .catch(err => console.error("Error entidades:", err));
-
-    // 3. Verificar sesión CON SEGURIDAD
-    const verificarUsuario = () => {
-      const usuarioGuardado = localStorage.getItem('usuarioCiudadano');
-      if (usuarioGuardado) {
-        try {
-          const datosUsuario = JSON.parse(usuarioGuardado);
-          setUsuario(datosUsuario);
-          cargarFavoritos(datosUsuario.id);
-        } catch (error) {
-          console.error("Error leyendo datos del usuario:", error);
-          localStorage.removeItem('usuarioCiudadano'); // Limpiamos si hay error
-        }
-      }
-      setCargandoSesion(false); // Terminó de buscar, ya podemos mostrar la app
-    };
-
-    verificarUsuario();
-  }, []);
 
   const cargarFavoritos = async (idUsuario) => {
     try {
-      const res = await fetch(`https://trin-pe-backend.onrender.com/api/favoritos/${idUsuario}`);
-      if (res.ok) setListaFavoritos(await res.json());
-    } catch (error) { console.error("Error al cargar favoritos", error); }
+      const respuesta = await apiFetch(`/api/favoritos/${idUsuario}`);
+      if (respuesta.ok) {
+        setListaFavoritos(await respuesta.json());
+      }
+    } catch (error) {
+      console.error('Error al cargar favoritos', error);
+    }
+  };
+
+  useEffect(() => {
+    apiFetch('/api/tramites')
+      .then((res) => {
+        if (!res.ok) throw new Error('Error en el servidor de base de datos');
+        return res.json();
+      })
+      .then((data) => setListaTramites(data))
+      .catch((err) => {
+        reportarErrorAutomatico('Fallo de conexion a la base de datos', err.message);
+        showToast('No pudimos cargar los tramites.', 'error');
+      });
+
+    apiFetch('/api/entidades')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setListaEntidades(data))
+      .catch(() => showToast('No pudimos cargar las entidades.', 'error'));
+
+    const sesion = getSession();
+    const datosUsuario = getUser();
+    if (sesion?.token && datosUsuario) {
+      setUsuario(datosUsuario);
+      cargarFavoritos(datosUsuario.id);
+    }
+    setCargandoSesion(false);
+  }, [showToast]);
+
+  const terminoNormalizado = terminoBusqueda.toLowerCase().trim();
+  const tramitesFiltrados = useMemo(() => {
+    return listaTramites.filter((tramite) => {
+      if (!terminoNormalizado) return true;
+      return (
+        tramite.titulo?.toLowerCase().includes(terminoNormalizado) ||
+        tramite.entidad?.toLowerCase().includes(terminoNormalizado) ||
+        tramite.descripcion?.toLowerCase().includes(terminoNormalizado)
+      );
+    });
+  }, [listaTramites, terminoNormalizado]);
+
+  const esTramiteFavorito = (idTramite) => listaFavoritos.some((favorito) => favorito.id === idTramite);
+
+  const registrarBusquedaSilenciosa = async () => {
+    if (terminoBusqueda.trim().length < 2) return;
+    try {
+      await apiFetch('/api/metricas', {
+        method: 'POST',
+        body: JSON.stringify({ termino: terminoBusqueda }),
+      });
+    } catch (error) {
+      console.error('No se pudo registrar la busqueda');
+    }
   };
 
   const toggleFavorito = async (tramite, evento) => {
     if (evento) evento.stopPropagation();
     if (!usuario) {
-      alert("Debes iniciar sesión para guardar tus guías favoritas.");
-      navigate('/');
+      showToast('Inicia sesion para guardar guias favoritas.', 'warning');
+      navigate('/login');
       return;
     }
-    const esFavorito = listaFavoritos.some(f => f.id === tramite.id);
+
+    const yaEsFavorito = esTramiteFavorito(tramite.id);
     try {
-      if (esFavorito) {
-        await fetch(`https://trin-pe-backend.onrender.com/api/favoritos/${usuario.id}/${tramite.id}`, { method: 'DELETE' });
+      if (yaEsFavorito) {
+        await apiFetch(`/api/favoritos/${usuario.id}/${tramite.id}`, { method: 'DELETE' });
+        showToast('Guia retirada de favoritos.', 'success');
       } else {
-        await fetch(`https://trin-pe-backend.onrender.com/api/favoritos`, {
+        const respuesta = await apiFetch('/api/favoritos', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ usuario_id: usuario.id, tramite_id: tramite.id })
+          body: JSON.stringify({ usuario_id: usuario.id, tramite_id: tramite.id }),
         });
+
+        if (!respuesta.ok) {
+          const data = await respuesta.json();
+          showToast(data.error || 'No se pudo guardar el favorito.', 'error');
+          return;
+        }
+        showToast('Guia guardada en favoritos.', 'success');
       }
       cargarFavoritos(usuario.id);
-    } catch (error) { console.error("Error al modificar favoritos", error); }
-  };
-
-  const esTramiteFavorito = (idTramite) => listaFavoritos.some(f => f.id === idTramite);
-
-  const registrarBusquedaSilenciosa = async () => {
-    if (terminoBusqueda.trim().length < 2) return;
-    try {
-      await fetch('https://trin-pe-backend.onrender.com/api/metricas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ termino: terminoBusqueda })
-      });
-    } catch (error) { console.error("Error métrica"); }
-  };
-
-  const tramitesFiltrados = listaTramites.filter(t => 
-    t.titulo.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
-    t.entidad.toLowerCase().includes(terminoBusqueda.toLowerCase())
-  );
-
-  const obtenerListaSegura = (datos) => {
-    if (!datos) return [];
-    return typeof datos === 'string' ? JSON.parse(datos) : datos;
+    } catch (error) {
+      showToast('No se pudo actualizar favoritos.', 'error');
+    }
   };
 
   const cerrarSesion = () => {
-    localStorage.removeItem('usuarioCiudadano');
+    clearSession();
     setUsuario(null);
     setListaFavoritos([]);
-    alert("Sesión cerrada");
-    navigate('/'); // Redirige a la página principal al cerrar sesión
+    showToast('Sesion cerrada correctamente.', 'success');
+    navigate('/');
   };
 
   const enviarReporte = async (e) => {
     e.preventDefault();
+    if (!tramiteSeleccionado) return;
+
     try {
-      const respuesta = await fetch('https://trin-pe-backend.onrender.com/api/alertas', {
+      const respuesta = await apiFetch('/api/alertas', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tipo: 'REPORTE_CIUDADANO',
           tramite_id: tramiteSeleccionado.id,
           motivo: motivoReporte,
-          descripcion: descripcionReporte
-        })
+          descripcion: descripcionReporte,
+        }),
       });
-      if (respuesta.ok) {
-        alert('✅ Gracias por tu reporte. Nuestro equipo lo revisará en breve.');
-        setMostrarModalReporte(false);
-        setDescripcionReporte('');
+
+      if (!respuesta.ok) {
+        showToast('No se pudo enviar el reporte.', 'error');
+        return;
       }
+
+      showToast('Gracias por tu reporte. Lo revisaremos pronto.', 'success');
+      setMostrarModalReporte(false);
+      setDescripcionReporte('');
     } catch (error) {
-      alert('Error de conexión al enviar el reporte.');
+      showToast('Error de conexion al enviar el reporte.', 'error');
     }
   };
 
-  // ==========================================
-  // PANTALLA DE CARGA MIENTRAS LEE LOCALSTORAGE
-  // ==========================================
   if (cargandoSesion) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f8fafc', flexDirection: 'column' }}>
-        <h2 style={{ color: '#1e3a8a' }}>Cargando tu perfil...</h2>
-        <p style={{ color: '#64748b' }}>Conectando con Trámite Inteligente</p>
+      <div className="loading-screen">
+        <h2>Cargando tu perfil...</h2>
+        <p>Conectando con Tramite Inteligente</p>
       </div>
     );
   }
 
   return (
-    <div className="ciudadano-layout">
-      <aside className="ciudadano-sidebar">
-        <div className="sidebar-logo"><h2>Trámite Fácil</h2></div>
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${vistaActual === 'buscador' ? 'active' : ''}`} onClick={() => { setVistaActual('buscador'); setTramiteSeleccionado(null); }}>
-            🔍 Buscador Principal
+    <div className="ciudadano-page">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <img src={logoImg} alt="Logo TrinPe" />
+          <h2>Trámite Inteligente</h2>
+          <span>Portal Ciudadano</span>
+        </div>
+        <nav className="sidebar-menu">
+          <button className={`menu-item ${vistaActual === 'buscador' ? 'active' : ''}`} onClick={() => { setVistaActual('buscador'); setTramiteSeleccionado(null); }}>
+            <Search size={20} /> Buscador principal
           </button>
-          <button className={`nav-item ${vistaActual === 'entidades' ? 'active' : ''}`} onClick={() => { setVistaActual('entidades'); setTramiteSeleccionado(null); }}>
-            🏢 Directorio de Entidades
+          <button className={`menu-item ${vistaActual === 'entidades' ? 'active' : ''}`} onClick={() => { setVistaActual('entidades'); setTramiteSeleccionado(null); }}>
+            <Building2 size={20} /> Directorio de entidades
           </button>
-          <button className={`nav-item ${vistaActual === 'favoritos' ? 'active' : ''}`} onClick={() => { setVistaActual('favoritos'); setTramiteSeleccionado(null); }}>
-            ⭐ Mis Guías Guardadas
+          <button className={`menu-item ${vistaActual === 'favoritos' ? 'active' : ''}`} onClick={() => { setVistaActual('favoritos'); setTramiteSeleccionado(null); }}>
+            <Bookmark size={20} /> Mis guías guardadas
           </button>
         </nav>
         {usuario && (
-          <div style={{ padding: '20px', borderTop: '1px solid #e2e8f0', textAlign: 'center' }}>
-            <button onClick={cerrarSesion} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold' }}>🚪 Cerrar Sesión</button>
+          <div className="sidebar-footer">
+            <button className="menu-item logout" onClick={cerrarSesion}>
+              <LogOut size={20} /> Cerrar sesión
+            </button>
           </div>
         )}
       </aside>
 
-      <main className="ciudadano-main">
-        <header className="ciudadano-header">
-          <h1>Portal de Atención al Ciudadano</h1>
-          <div className="ciudadano-avatar" style={{ display: 'flex', gap: '10px', alignItems: 'center', background: 'none', width: 'auto' }}>
-             <span style={{ color: '#1e293b', fontWeight: '600' }}>{usuario ? `Hola, ${usuario.nombre.split(' ')[0]}` : 'Invitado'}</span>
-             <div style={{ backgroundColor: '#1e3a8a', color: 'white', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                {usuario ? usuario.nombre.charAt(0).toUpperCase() : 'C'}
-             </div>
-          </div>
-        </header>
-
-        <div className="ciudadano-content">
-          
-          {vistaActual === 'buscador' && !tramiteSeleccionado && (
-            <div className="buscador-section">
-              <div className="search-box-container">
-                <h2>¿Qué trámite necesitas realizar hoy?</h2>
-                <div className="search-bar">
-                  <input type="text" placeholder="Ej. Sacar pasaporte, renovar DNI, multas..." value={terminoBusqueda} onChange={(e) => setTerminoBusqueda(e.target.value)} />
-                  <button className="btn-search" onClick={registrarBusquedaSilenciosa}>Buscar</button>
-                </div>
-              </div>
-              <div className="resultados-grid">
-                {terminoBusqueda && tramitesFiltrados.length === 0 ? (
-                  <p style={{textAlign: 'center', color: '#64748b', marginTop: '20px'}}>No encontramos resultados para tu búsqueda.</p>
-                ) : (
-                  tramitesFiltrados.map(tramite => (
-                    <div key={tramite.id} className="tramite-card-citizen" onClick={() => setTramiteSeleccionado(tramite)}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span className="badge-entidad">{tramite.entidad}</span>
-                        <button onClick={(e) => toggleFavorito(tramite, e)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', padding: 0 }} title="Guardar en favoritos">
-                          {esTramiteFavorito(tramite.id) ? '⭐' : '☆'}
-                        </button>
-                      </div>
-                      <h3>{tramite.titulo}</h3>
-                      <p className="tramite-desc-short">{tramite.descripcion}</p>
-                      <div className="tramite-footer">
-                        <span>Costo: S/ {tramite.costo}</span>
-                        <span style={{color: '#3b82f6', fontWeight: 'bold'}}>Ver guía ➔</span>
-                      </div>
-                    </div>
-                  ))
-                )}
+      <main className="main-content">
+        {vistaActual === 'buscador' && !tramiteSeleccionado && (
+          <>
+            <div className="search-hero">
+              <h1>Encuentra tu trámite al instante</h1>
+              <p>Busca por nombre, entidad responsable o palabras clave y ahorra tiempo en colas.</p>
+              <div className="search-wrapper">
+                <Search className="search-icon" size={24} />
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Ej. Sacar pasaporte, renovar DNI, multas..."
+                  value={terminoBusqueda}
+                  onChange={(e) => setTerminoBusqueda(e.target.value)}
+                  onBlur={registrarBusquedaSilenciosa}
+                />
               </div>
             </div>
-          )}
+
+            <div className="section-title">
+              <Search size={24} /> {terminoBusqueda ? 'Resultados de búsqueda' : 'Trámites destacados'}
+            </div>
+
+            <div className="tramites-grid">
+              {terminoBusqueda && tramitesFiltrados.length === 0 ? (
+                <p>No encontramos resultados para tu búsqueda.</p>
+              ) : (
+                tramitesFiltrados.map((tramite) => (
+                  <div key={tramite.id} className="tramite-card">
+                    <div className="tramite-header">
+                      <span className="entidad-badge">
+                        <Building2 size={14} /> {tramite.entidad}
+                      </span>
+                      <button onClick={(e) => { e.stopPropagation(); toggleFavorito(tramite); }} className={`btn-icon ${esTramiteFavorito(tramite.id) ? 'favorito' : ''}`} title="Guardar">
+                        <Star size={20} fill={esTramiteFavorito(tramite.id) ? 'currentColor' : 'none'} />
+                      </button>
+                    </div>
+                    <h3 className="tramite-title">{tramite.titulo}</h3>
+                    <p className="tramite-desc">{tramite.descripcion}</p>
+                    <div className="tramite-footer">
+                      <span className={`badge ${tramite.modalidad.toLowerCase()}`}>{tramite.modalidad}</span>
+                      <span className="costo-pill">S/ {tramite.costo}</span>
+                    </div>
+                    <button className="btn-ver-mas" onClick={() => setTramiteSeleccionado(tramite)}>
+                      Ver guía paso a paso <ArrowLeft size={16} style={{ transform: 'rotate(180deg)' }} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
 
           {vistaActual === 'entidades' && !tramiteSeleccionado && (
-            <div className="entidades-section">
-              <h2 style={{ color: '#1e293b', marginBottom: '5px' }}>Directorio de Instituciones</h2>
-              <p style={{ color: '#64748b', marginBottom: '25px' }}>Explora todas las entidades del Estado y los trámites que administran.</p>
-              <div className="entidades-grid">
+            <>
+              <div className="section-title">
+                <Building2 size={24} /> Directorio de Entidades Públicas
+              </div>
+              <div className="tramites-grid">
                 {listaEntidades.length === 0 ? (
                   <p>Cargando entidades...</p>
                 ) : (
-                  listaEntidades.map(ent => (
-                    <div key={ent.id} className="entidad-card-visual">
-                      <img src={ent.logo_url || "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Flag_of_Peru_%28state%29.svg/800px-Flag_of_Peru_%28state%29.svg.png"} alt={`Logo de ${ent.sigla}`} className="entidad-card-img" style={{ objectFit: 'contain', padding: '10px', backgroundColor: '#f8fafc' }} onError={(e) => { e.target.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Flag_of_Peru_%28state%29.svg/800px-Flag_of_Peru_%28state%29.svg.png"; }} />
-                      <div className="entidad-card-body">
-                        <h3 className="entidad-sigla">{ent.sigla}</h3>
-                        <p className="entidad-nombre">{ent.nombre_completo}</p>
-                        <hr className="entidad-divider" />
-                        <button className="btn-ver-tramites" onClick={() => { setTerminoBusqueda(ent.sigla); setVistaActual('buscador'); }}>Ver sus trámites ➔</button>
-                      </div>
+                  listaEntidades.map((entidad) => (
+                    <div key={entidad.id} className="tramite-card" style={{ textAlign: 'center', alignItems: 'center' }}>
+                      <img src={entidad.logo_url || FALLBACK_LOGO} alt={`Logo`} style={{ width: 64, height: 64, borderRadius: '50%', marginBottom: 16 }} onError={(e) => { e.target.src = FALLBACK_LOGO; }} />
+                      <h3 className="tramite-title">{entidad.sigla}</h3>
+                      <p className="tramite-desc" style={{ textAlign: 'center' }}>{entidad.nombre_completo}</p>
+                      <button className="btn-ver-mas" onClick={() => { setTerminoBusqueda(entidad.sigla); setVistaActual('buscador'); }}>
+                        <Search size={16} /> Buscar sus trámites
+                      </button>
                     </div>
                   ))
                 )}
               </div>
-            </div>
+            </>
           )}
 
           {vistaActual === 'favoritos' && !tramiteSeleccionado && (
-            <div className="buscador-section">
-              <h2 style={{ color: '#1e293b', marginBottom: '5px' }}>Mis Guías Guardadas</h2>
+            <>
+              <div className="section-title">
+                <Bookmark size={24} /> Mis trámites guardados
+              </div>
               {!usuario ? (
-                <div style={{ textAlign: 'center', padding: '50px 20px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '20px' }}>
-                  <span style={{ fontSize: '40px' }}>🔒</span>
-                  <h3 style={{ color: '#1e293b' }}>Inicia sesión para guardar trámites</h3>
-                  <p style={{ color: '#64748b', marginBottom: '20px' }}>Crea tu cuenta gratis para no perder tus guías favoritas y acceder a ellas desde cualquier dispositivo.</p>
-                  <button onClick={() => navigate('/')} className="btn-search">Ir a Iniciar Sesión</button>
+                <div className="search-hero" style={{ background: 'var(--white)', color: 'var(--text-main)', border: '1px solid var(--border)' }}>
+                  <Bookmark size={48} color="var(--primary)" style={{ margin: '0 auto 16px' }} />
+                  <h2 style={{ color: 'var(--primary)' }}>Inicia sesión para guardar trámites</h2>
+                  <p style={{ color: 'var(--text-secondary)' }}>Crea tu cuenta gratis para no perder tus guías favoritas.</p>
+                  <button onClick={() => navigate('/login')} className="btn-ver-mas" style={{ background: 'var(--primary)', color: 'var(--white)', maxWidth: '200px', margin: '0 auto' }}>
+                    Ir al acceso
+                  </button>
                 </div>
               ) : listaFavoritos.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                  <span style={{ fontSize: '40px' }}>⭐</span>
-                  <p>Aún no tienes trámites guardados.</p>
-                </div>
+                <p>Aún no tienes trámites guardados. Usa la estrella para guardar uno.</p>
               ) : (
-                <div className="resultados-grid" style={{ marginTop: '20px' }}>
-                  {listaFavoritos.map(tramite => (
-                    <div key={tramite.id} className="tramite-card-citizen" onClick={() => setTramiteSeleccionado(tramite)}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span className="badge-entidad">{tramite.entidad}</span>
-                        <button onClick={(e) => toggleFavorito(tramite, e)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', padding: 0 }}>⭐</button>
+                <div className="tramites-grid">
+                  {listaFavoritos.map((tramite) => (
+                    <div key={tramite.id} className="tramite-card">
+                      <div className="tramite-header">
+                        <span className="entidad-badge"><Building2 size={14}/> {tramite.entidad}</span>
+                        <button onClick={(e) => { e.stopPropagation(); toggleFavorito(tramite); }} className="btn-icon favorito" title="Quitar">
+                          <Star size={20} fill="currentColor" />
+                        </button>
                       </div>
-                      <h3>{tramite.titulo}</h3>
-                      <p className="tramite-desc-short">{tramite.descripcion}</p>
+                      <h3 className="tramite-title">{tramite.titulo}</h3>
+                      <p className="tramite-desc">{tramite.descripcion}</p>
                       <div className="tramite-footer">
-                        <span>Costo: S/ {tramite.costo}</span>
-                        <span style={{color: '#3b82f6', fontWeight: 'bold'}}>Ver guía ➔</span>
+                        <span className={`badge ${tramite.modalidad.toLowerCase()}`}>{tramite.modalidad}</span>
+                        <span className="costo-pill">S/ {tramite.costo}</span>
                       </div>
+                      <button className="btn-ver-mas" onClick={() => setTramiteSeleccionado(tramite)}>
+                        Ver guía paso a paso <ArrowLeft size={16} style={{ transform: 'rotate(180deg)' }} />
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </>
           )}
 
           {tramiteSeleccionado && (
-            <div className="detalle-tramite-container">
-              <button className="btn-volver" onClick={() => setTramiteSeleccionado(null)}>← Volver a resultados</button>
+            <div className="detalle-wrapper">
+              <button className="btn-volver" onClick={() => setTramiteSeleccionado(null)}>
+                <ArrowLeft size={18} /> Volver a resultados
+              </button>
               
               <div className="detalle-header">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="badge-entidad">{tramiteSeleccionado.entidad}</span>
-                  <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                    <button 
-                      onClick={() => setMostrarModalReporte(true)}
-                      style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
-                    >
-                      🚩 Reportar error
-                    </button>
-                    <button onClick={() => toggleFavorito(tramiteSeleccionado)} style={{ background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer' }} title={esTramiteFavorito(tramiteSeleccionado.id) ? "Quitar de favoritos" : "Guardar en favoritos"}>
-                      {esTramiteFavorito(tramiteSeleccionado.id) ? '⭐' : '☆'}
-                    </button>
+                <div>
+                  <div className="detalle-meta" style={{ marginBottom: 16 }}>
+                    <span className="entidad-badge"><Building2 size={16}/> {tramiteSeleccionado.entidad}</span>
+                    <span className={`badge ${tramiteSeleccionado.modalidad.toLowerCase()}`}>{tramiteSeleccionado.modalidad}</span>
                   </div>
+                  <h1>{tramiteSeleccionado.titulo}</h1>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 18 }}>Costo oficial: <strong style={{ color: 'var(--primary)' }}>S/ {tramiteSeleccionado.costo}</strong></p>
                 </div>
-                <h2>{tramiteSeleccionado.titulo}</h2>
-                <p className="detalle-descripcion">{tramiteSeleccionado.descripcion}</p>
-                <div className="detalle-meta">
-                  <div className="meta-box"><strong>Modalidad:</strong> {tramiteSeleccionado.modalidad}</div>
-                  <div className="meta-box"><strong>Costo:</strong> S/ {tramiteSeleccionado.costo}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <button className="btn-reportar" onClick={() => setMostrarModalReporte(true)}>
+                    <AlertTriangle size={16} /> Reportar error
+                  </button>
+                  <button className="btn-primary" onClick={() => toggleFavorito(tramiteSeleccionado)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Star size={16} fill={esTramiteFavorito(tramiteSeleccionado.id) ? 'currentColor' : 'none'} />
+                    {esTramiteFavorito(tramiteSeleccionado.id) ? 'Quitar guardado' : 'Guardar guía'}
+                  </button>
                 </div>
               </div>
 
-              <div className="detalle-body">
-                <div className="requisitos-section">
-                  <h3>📋 Requisitos Previos</h3>
-                  <ul>
-                    {obtenerListaSegura(tramiteSeleccionado.requisitos).map((req, i) => <li key={i}>{req}</li>)}
-                  </ul>
+              <div className="detalle-grid">
+                <div>
+                  <div className="detalle-seccion">
+                    <h3>¿De qué trata este trámite?</h3>
+                    <p>{tramiteSeleccionado.descripcion}</p>
+                  </div>
+                  <div className="detalle-seccion">
+                    <h3>Pasos a seguir</h3>
+                    <ol className="lista-items" style={{ padding: 0 }}>
+                      {parseList(tramiteSeleccionado.pasos).map((paso, index) => (
+                        <li key={index}>
+                          <strong>{paso.titulo}</strong>
+                          <p style={{ marginTop: 4, color: 'var(--text-secondary)' }}>{paso.instrucciones}</p>
+                          {paso.archivoUrl && (
+                            <a href={paso.archivoUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 8, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
+                              Descargar formato oficial ⬇
+                            </a>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 </div>
-                <div className="pasos-section">
-                  <h3>🚶‍♂️ Guía Paso a Paso</h3>
-                  {obtenerListaSegura(tramiteSeleccionado.pasos).map((paso, index) => (
-                    <div key={index} className="paso-card">
-                      <div className="paso-numero">{index + 1}</div>
-                      <div className="paso-contenido">
-                        <h4>{paso.titulo}</h4>
-                        <p>{paso.instrucciones}</p>
-                        {paso.archivoUrl && <a href={paso.archivoUrl} target="_blank" rel="noopener noreferrer" className="btn-descargar-pdf">📄 Descargar Formato Oficial</a>}
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <div className="detalle-seccion">
+                    <h3>Requisitos indispensables</h3>
+                    <ul className="lista-items" style={{ padding: 0 }}>
+                      {parseList(tramiteSeleccionado.requisitos).map((req, index) => (
+                        <li key={index}>{req.descripcion}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
           {mostrarModalReporte && (
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-              <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '10px', width: '90%', maxWidth: '400px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                <h3 style={{ marginTop: 0, color: '#dc2626' }}>🚩 Reportar este trámite</h3>
-                <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '20px' }}>Ayúdanos a mejorar. Si la información de este trámite es incorrecta, dínoslo aquí.</p>
-                
-                <form onSubmit={enviarReporte} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>Motivo principal:</label>
-                    <select value={motivoReporte} onChange={(e) => setMotivoReporte(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                      <option value="Información desactualizada">Información desactualizada</option>
-                      <option value="El costo es incorrecto">El costo es incorrecto</option>
-                      <option value="Faltan requisitos">Faltan requisitos importantes</option>
-                      <option value="El link/PDF no funciona">El enlace o PDF no funciona</option>
-                      <option value="Otro motivo">Otro motivo</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>Descripción breve (Opcional):</label>
-                    <textarea rows="3" value={descripcionReporte} onChange={(e) => setDescripcionReporte(e.target.value)} placeholder="Danos más detalles..." style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}></textarea>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                    <button type="button" onClick={() => setMostrarModalReporte(false)} style={{ flex: 1, padding: '10px', border: '1px solid #cbd5e1', backgroundColor: 'white', borderRadius: '6px', cursor: 'pointer' }}>Cancelar</button>
-                    <button type="submit" style={{ flex: 1, padding: '10px', border: 'none', backgroundColor: '#dc2626', color: 'white', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer' }}>Enviar Reporte</button>
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <h3>Reportar este trámite</h3>
+                <p>Ayúdanos a mantener la información actualizada.</p>
+                <form onSubmit={enviarReporte}>
+                  <label style={{ display: 'block', marginBottom: 4, color: 'var(--text-secondary)' }}>Motivo principal</label>
+                  <select value={motivoReporte} onChange={(e) => setMotivoReporte(e.target.value)}>
+                    <option value="Informacion desactualizada">Información desactualizada</option>
+                    <option value="El costo es incorrecto">El costo es incorrecto</option>
+                    <option value="Faltan requisitos">Faltan requisitos importantes</option>
+                    <option value="El link/PDF no funciona">El enlace o PDF no funciona</option>
+                    <option value="Otro motivo">Otro motivo</option>
+                  </select>
+                  <label style={{ display: 'block', marginBottom: 4, color: 'var(--text-secondary)' }}>Descripción breve</label>
+                  <textarea rows="3" value={descripcionReporte} onChange={(e) => setDescripcionReporte(e.target.value)} placeholder="Danos más detalles..." />
+                  <div className="modal-actions">
+                    <button type="button" className="btn-secondary" onClick={() => setMostrarModalReporte(false)}>Cancelar</button>
+                    <button type="submit" className="btn-primary">Enviar reporte</button>
                   </div>
                 </form>
               </div>
             </div>
           )}
-
-        </div>
-      </main>
+        </main>
     </div>
   );
 };
