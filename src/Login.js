@@ -57,7 +57,11 @@ function Login() {
       }
 
       if (esRegistro) {
-        showToast('Código enviado. Revisa tu correo.', 'success');
+        if (resultado.codigo_prueba) {
+          showToast(`Modo Demo (Render bloquea correos): Tu código es ${resultado.codigo_prueba}`, 'success');
+        } else {
+          showToast('Código enviado. Revisa tu correo.', 'success');
+        }
         setPasoVerificacion(true);
         setCargando(false);
         return;
