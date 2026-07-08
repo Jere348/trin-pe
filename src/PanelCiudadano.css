@@ -576,3 +576,18 @@
 .btn-primary:hover {
   background: var(--accent);
 }
+
+/* --- RESPONSIVIDAD (Ciudadano) --- */
+@media screen and (max-width: 900px) {
+  .sidebar { width: 100%; height: auto; position: fixed; bottom: 0; top: auto; flex-direction: row; padding: 10px; z-index: 100; border-right: none; border-top: 1px solid var(--border); box-shadow: 0 -4px 12px rgba(0,0,0,0.05); }
+  .sidebar-header { display: none; }
+  .sidebar-menu { flex-direction: row; justify-content: space-around; width: 100%; margin: 0; }
+  .menu-item { flex-direction: column; font-size: 10px; padding: 6px; gap: 4px; text-align: center; justify-content: center; }
+  .menu-item svg { width: 20px; height: 20px; margin: 0; }
+  .sidebar-footer { display: none; }
+  .main-content { margin-left: 0; padding: 20px; padding-bottom: 80px; }
+  .detalle-grid { grid-template-columns: 1fr; }
+  .search-hero { padding: 30px 15px; }
+  .search-hero h1 { font-size: 24px; }
+  .tramites-grid { grid-template-columns: 1fr; }
+}

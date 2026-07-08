@@ -1347,3 +1347,21 @@ h1, h2, h3, h4 {
     align-items: flex-start;
   }
 }
+
+/* --- RESPONSIVIDAD (Landing Page) --- */
+@media screen and (max-width: 992px) {
+  .hero-section { flex-direction: column; text-align: center; padding-top: 40px; }
+  .hero-text { padding-right: 0; margin-bottom: 40px; }
+  .hero-buttons { justify-content: center; }
+  .hero-stats { justify-content: center; }
+  .steps-grid { flex-direction: column; gap: 40px; }
+  .steps-grid::before { display: none; }
+  .benefits-grid, .testimonials-grid, .footer-top { grid-template-columns: repeat(2, 1fr); }
+  .contact-section { flex-direction: column; }
+  .contact-text { max-width: 100%; text-align: center; }
+}
+@media screen and (max-width: 768px) {
+  .benefits-grid, .testimonials-grid, .footer-top { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .navbar { flex-direction: column; height: auto; padding: 15px; gap: 15px; }
+}
