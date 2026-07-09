@@ -131,8 +131,7 @@ function Login() {
           <span className="section-label">Acceso seguro</span>
           <h1>Elige como quieres entrar a Trin-Pe</h1>
           <p>
-            El ciudadano consulta y guarda guias. El administrador gestiona el catalogo,
-            entidades, reportes y metricas internas.
+            Comienza a gestionar tus trámites hoy mismo. Descubre guías paso a paso, guarda tus requisitos favoritos y olvídate de las largas filas en las entidades del Estado.
           </p>
           <div className="login-feature-list">
             <span>Catalogo centralizado</span>
