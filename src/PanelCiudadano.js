@@ -7,6 +7,34 @@ import './PanelCiudadano.css';
 import logoImg from './assets/logo.png';
 import Chatbot from './Chatbot';
 
+// Componente para convertir URLs en texto a enlaces clickeables
+const Linkify = ({ text }) => {
+  if (!text) return null;
+  // Expresión regular básica para detectar URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  
+  return (
+    <>
+      {parts.map((part, i) => 
+        urlRegex.test(part) ? (
+          <a 
+            key={i} 
+            href={part} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style={{ color: 'var(--accent)', textDecoration: 'underline', fontWeight: 500 }}
+          >
+            {part}
+          </a>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+};
+
 const FALLBACK_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Flag_of_Peru_%28state%29.svg/800px-Flag_of_Peru_%28state%29.svg.png';
 
 const parseList = (value) => {
@@ -423,7 +451,7 @@ const PanelCiudadano = () => {
                 <div>
                   <div className="detalle-seccion">
                     <h3>¿De qué trata este trámite?</h3>
-                    <p>{tramiteSeleccionado.descripcion}</p>
+                    <p><Linkify text={tramiteSeleccionado.descripcion} /></p>
                   </div>
                   <div className="detalle-seccion">
                     <h3>Pasos a seguir</h3>
@@ -431,7 +459,9 @@ const PanelCiudadano = () => {
                       {parseList(tramiteSeleccionado.pasos).map((paso, index) => (
                         <li key={index}>
                           <strong>{paso.titulo}</strong>
-                          <p style={{ marginTop: 4, color: 'var(--text-secondary)' }}>{paso.instrucciones}</p>
+                          <p style={{ marginTop: 4, color: 'var(--text-secondary)' }}>
+                            <Linkify text={paso.instrucciones} />
+                          </p>
                           {paso.archivoUrl && (
                             <a href={paso.archivoUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 8, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
                               Descargar formato oficial ⬇
@@ -447,7 +477,9 @@ const PanelCiudadano = () => {
                     <h3>Requisitos indispensables</h3>
                     <ul className="lista-items" style={{ padding: 0 }}>
                       {parseList(tramiteSeleccionado.requisitos).map((req, index) => (
-                        <li key={index}>{typeof req === 'string' ? req : req.descripcion}</li>
+                        <li key={index}>
+                          <Linkify text={typeof req === 'string' ? req : req.descripcion} />
+                        </li>
                       ))}
                     </ul>
                   </div>
