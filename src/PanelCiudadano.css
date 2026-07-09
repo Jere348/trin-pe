@@ -420,7 +420,8 @@
 
 .detalle-meta {
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
   align-items: center;
 }
 
@@ -719,4 +720,20 @@ body.a11y-high-contrast .search-hero h1 { color: var(--primary); }
   .search-hero { padding: 30px 15px; }
   .search-hero h1 { font-size: 24px; }
   .tramites-grid { grid-template-columns: 1fr; }
+  
+  /* Mejoras adicionales para el detalle en móviles */
+  .detalle-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .detalle-header > div:last-child {
+    align-items: flex-start !important;
+    width: 100%;
+  }
+  
+  .detalle-meta {
+    gap: 8px;
+  }
 }

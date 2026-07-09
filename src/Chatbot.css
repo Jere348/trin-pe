@@ -230,7 +230,21 @@
   cursor: not-allowed;
 }
 
+@media screen and (max-width: 900px) {
+  .chatbot-container {
+    bottom: 85px;
+  }
+}
+
 @media screen and (max-width: 480px) {
-  .chatbot-container { bottom: 16px; right: 16px; z-index: 10000; }
-  .chatbot-window { width: calc(100vw - 32px); height: calc(100vh - 120px); }
+  .chatbot-container { bottom: 85px; right: 16px; z-index: 10000; }
+  .chatbot-window { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    max-height: 100vh; 
+    border-radius: 0; 
+  }
 }

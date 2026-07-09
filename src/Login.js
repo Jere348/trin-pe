@@ -142,6 +142,7 @@ function Login() {
         </section>
 
         <section className="login-card">
+          <img src={logoImg} alt="Logo TRIN.PE" className="mobile-logo" />
           <div className="login-tabs" role="tablist" aria-label="Tipo de acceso">
             <button
               type="button"
