@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, clearSession, getSession, getUser } from './api';
 import { useToast } from './Toast';
-import { Search, Building2, Bookmark, LogOut, ArrowLeft, AlertTriangle, Star, Settings, Volume2, Eye } from 'lucide-react';
+import { Search, Building2, Bookmark, LogOut, ArrowLeft, AlertTriangle, Star, Settings, Volume2, Eye, Clock, Calendar } from 'lucide-react';
 import './PanelCiudadano.css';
 import logoImg from './assets/logo.png';
 import Chatbot from './Chatbot';
@@ -385,6 +385,18 @@ const PanelCiudadano = () => {
                   <h1>{tramiteSeleccionado.titulo}</h1>
                   <div className="detalle-meta">
                     <span className="entidad-badge"><Building2 size={16}/> {tramiteSeleccionado.entidad}</span>
+                    
+                    {tramiteSeleccionado.tiempo_tramite && (
+                      <span className="tiempo-pill">
+                        <Clock size={16} /> Aplicación: {tramiteSeleccionado.tiempo_tramite}
+                      </span>
+                    )}
+                    {tramiteSeleccionado.tiempo_resolucion && (
+                      <span className="tiempo-pill resolution">
+                        <Calendar size={16} /> Resolución: {tramiteSeleccionado.tiempo_resolucion}
+                      </span>
+                    )}
+
                     <span className="costo-pill">S/ {tramiteSeleccionado.costo}</span>
                     <span className={`badge ${tramiteSeleccionado.modalidad?.toLowerCase()}`}>
                       {tramiteSeleccionado.modalidad}

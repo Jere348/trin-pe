@@ -29,6 +29,8 @@ const PanelAdmin = () => {
   const [entidad, setEntidad] = useState('');
   const [modalidad, setModalidad] = useState('Virtual');
   const [costo, setCosto] = useState('');
+  const [tiempoTramite, setTiempoTramite] = useState('');
+  const [tiempoResolucion, setTiempoResolucion] = useState('');
   const [requisitos, setRequisitos] = useState('');
   const [pasos, setPasos] = useState([{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
 
@@ -124,7 +126,7 @@ const PanelAdmin = () => {
 
   const limpiarFormulario = () => {
     setEditandoId(null); setTitulo(''); setCodigoInterno(''); setDescripcion(''); setEntidad(''); 
-    setCosto(''); setRequisitos(''); 
+    setCosto(''); setRequisitos(''); setTiempoTramite(''); setTiempoResolucion(''); 
     setPasos([{ id: Date.now(), titulo: '', instrucciones: '', archivoUrl: '', subiendo: false }]);
   };
 
@@ -133,6 +135,7 @@ const PanelAdmin = () => {
   const abrirParaEditar = (tramite) => {
     setEditandoId(tramite.id); setTitulo(tramite.titulo); setCodigoInterno(tramite.codigo_interno || '');
     setDescripcion(tramite.descripcion); setEntidad(tramite.entidad); setModalidad(tramite.modalidad || 'Virtual'); setCosto(tramite.costo);
+    setTiempoTramite(tramite.tiempo_tramite || ''); setTiempoResolucion(tramite.tiempo_resolucion || '');
     const listaReq = obtenerListaSegura(tramite.requisitos); 
     setRequisitos(listaReq.map(r => r.descripcion || r).join('\n'));
     const listaPasos = obtenerListaSegura(tramite.pasos); 
@@ -182,7 +185,11 @@ const PanelAdmin = () => {
   const guardarTramite = async (e) => {
     e.preventDefault();
     const arrayRequisitos = requisitos.split('\n').filter(req => req.trim() !== '');
-    const paqueteDeDatos = { titulo, codigo_interno: codigoInterno, descripcion, entidad, modalidad, costo: parseFloat(costo) || 0, requisitos: arrayRequisitos, pasos };
+    const paqueteDeDatos = { 
+      titulo, codigo_interno: codigoInterno, descripcion, entidad, modalidad, 
+      costo: parseFloat(costo) || 0, requisitos: arrayRequisitos, pasos,
+      tiempo_tramite: tiempoTramite, tiempo_resolucion: tiempoResolucion 
+    };
     const url = editandoId ? `/api/tramites/${editandoId}` : '/api/tramites';
     const metodo = editandoId ? 'PUT' : 'POST';
     try {
@@ -359,6 +366,7 @@ const PanelAdmin = () => {
                       <th>Código</th>
                       <th>Título</th>
                       <th>Entidad</th>
+                      <th>Tiempos</th>
                       <th>Costo</th>
                       <th>Acciones</th>
                     </tr>
@@ -371,6 +379,10 @@ const PanelAdmin = () => {
                         <td style={{ color: 'var(--text-light)', fontWeight: 600 }}>{t.codigo_interno || '-'}</td>
                         <td style={{ fontWeight: 600 }}>{t.titulo}</td>
                         <td>{t.entidad}</td>
+                        <td style={{ fontSize: '13px' }}>
+                          <div style={{ color: 'var(--text-secondary)' }}>Ventanilla: {t.tiempo_tramite || 'N/A'}</div>
+                          <div style={{ color: 'var(--primary)', fontWeight: 600 }}>Total: {t.tiempo_resolucion || 'N/A'}</div>
+                        </td>
                         <td>S/ {t.costo}</td>
                         <td>
                           <div className="action-group">
@@ -425,6 +437,14 @@ const PanelAdmin = () => {
                       <option value="Virtual">Virtual</option>
                       <option value="Mixto">Mixto</option>
                     </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Tiempo en Ventanilla (Ej. 15 mins)</label>
+                    <input className="form-input" value={tiempoTramite} onChange={(e) => setTiempoTramite(e.target.value)} placeholder="Tiempo aplicando" />
+                  </div>
+                  <div className="form-group">
+                    <label>Tiempo de Resolución (Ej. 7 días hábiles)</label>
+                    <input className="form-input" value={tiempoResolucion} onChange={(e) => setTiempoResolucion(e.target.value)} placeholder="Tiempo total de entrega" />
                   </div>
                   <div className="form-group full-width">
                     <label>Descripción General</label>
