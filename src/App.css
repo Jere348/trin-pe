@@ -76,6 +76,11 @@ h1, h2, h3, h4 {
   padding: 6px 12px;
   border-radius: 6px;
   transition: color 0.2s, background-color 0.2s;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-links a:hover {
@@ -96,6 +101,10 @@ h1, h2, h3, h4 {
   letter-spacing: 0.01em;
   transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
   box-shadow: 0 2px 8px rgba(30,58,138,0.25);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-login:hover {
@@ -248,6 +257,11 @@ h1, h2, h3, h4 {
   transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
   box-shadow: 0 3px 12px rgba(37,99,235,0.3);
   font-family: 'Inter', sans-serif;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-primary:hover {

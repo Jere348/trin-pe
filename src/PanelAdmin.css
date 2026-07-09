@@ -75,6 +75,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .menu-item:hover {
@@ -220,6 +222,7 @@
 .btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   background: var(--primary);
   color: var(--white);
@@ -230,12 +233,15 @@
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(30,58,138,0.2);
+  min-height: 44px;
+  min-width: 44px;
 }
 .btn-primary:hover { background: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   background: var(--white);
   color: var(--text-main);
@@ -245,12 +251,15 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  min-height: 44px;
+  min-width: 44px;
 }
 .btn-secondary:hover { background: var(--background); border-color: #CBD5E1; }
 
 .btn-danger {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   background: rgba(239, 68, 68, 0.1);
   color: var(--error);
@@ -260,6 +269,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  min-height: 44px;
+  min-width: 44px;
 }
 .btn-danger:hover { background: var(--error); color: var(--white); }
 
@@ -319,6 +330,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
 }
 .btn-icon-action.edit:hover { background: rgba(37,99,235,0.1); color: var(--accent); }
 .btn-icon-action.delete:hover { background: rgba(239,68,68,0.1); color: var(--error); }
@@ -350,6 +363,7 @@
   font-family: inherit;
   transition: all 0.2s;
   background: var(--background);
+  min-height: 44px;
 }
 
 .form-input:focus {

@@ -11,3 +11,14 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+html {
+  font-size: 16px; /* Base for rem units */
+}
+
+/* Regla global Mobile-First para imágenes */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
